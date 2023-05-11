@@ -13,6 +13,7 @@ $ pip install mysql-connector-python
 ```
 $ npm install
 ```
+
 3. Configurar la conexión a la base de datos
 ```
 $ nano whmcs/config.py
@@ -29,17 +30,20 @@ $ crontab -e
 ```
 
 ```
-@reboot sleep 5 && node /var/www/whatsapp-bot-4evergaming/index.js &
+@reboot sleep 5 && node /root/whatsapp-bot-4evergaming/index.js &
 
-*/5 * * * * cd /var/www/whatsapp-bot-4evergaming/whmcs && /usr/bin/python3 invoice_paid.py
-*/5 * * * * cd /var/www/Whatsapp-WHMCS/whmcs && /usr/bin/python3 client_area_login.py
-0 11 * * * cd /var/www/whatsapp-bot-4evergaming/whmcs && /usr/bin/python3 invoice_unpaid.py
-0 11 * * * cd /var/www/whatsapp-bot-4evergaming/whmcs && /usr/bin/python3 invoice_duedate.py
-0 11 * * * cd /var/www/whatsapp-bot-4evergaming/whmcs && /usr/bin/python3 invoice_comingTerminate.py
-0 11 * * * cd /var/www/Whatsapp-WHMCS/whmcs && /usr/bin/python3 order_pending.py
+*/5 * * * * cd /root/whatsapp-bot-4evergaming/whmcs && /usr/bin/python3 invoice_paid.py
+*/5 * * * * cd /root/whatsapp-bot-4evergaming/whmcs && /usr/bin/python3 client_area_login.py
+0 11 * * * cd /root/whatsapp-bot-4evergaming/whmcs && /usr/bin/python3 invoice_unpaid.py
+0 11 * * * cd /root/whatsapp-bot-4evergaming/whmcs && /usr/bin/python3 invoice_duedate.py
+0 11 * * * cd /root/whatsapp-bot-4evergaming/whmcs && /usr/bin/python3 invoice_comingTerminate.py
+0 11 * * * cd /root/whatsapp-bot-4evergaming/whmcs && /usr/bin/python3 order_pending.py
 ```
 
 6. Por ultimo iniciar la aplicación en segundo plano
 ```
 $ npm start & 
 ```
+
+# Consideraciones
+Configurar las tareas diarias para después de haberse ejecutado el cron de WHMCS. Además no se deben exponer los archivos frente a un servidor web.
