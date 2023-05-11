@@ -14,7 +14,12 @@ $ pip install mysql-connector-python
 $ npm install
 ```
 
-3. Configurar la conexión a la base de datos
+3. Configurar el token de acceso a la API
+```
+$ nano index.js
+```
+
+3. Configurar la conexión a la base de datos y colocar el token API creado en el paso anterior
 ```
 $ nano whmcs/config.py
 ```
