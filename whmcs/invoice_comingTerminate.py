@@ -27,7 +27,7 @@ for x in resultInvoice:
         if invoiceNumber == "":
             invoiceNumber = x[0]
         currency = "USD" if (user[17] == "1") else "ARS"
-        messageToSend = template_message.invoice_duedate.format(firstName = firstName,lastName = lastName,phone = phone, invoiceNumber = invoiceNumber, duedate = str(x[4]), duetotal= x[13], currency = currency)
+        messageToSend = template_message.invoice_comingTerminate.format(firstName = firstName,lastName = lastName,phone = phone, invoiceNumber = invoiceNumber, duedate = str(x[4]), duetotal= x[13], currency = currency)
         url = config.api_endpoint + '/api/send'
         data = {'phone': phone, 'message': messageToSend, 'token': config.api_token}
         sendMessage = requests.post(url, json = data)
