@@ -13,7 +13,7 @@ for x in clients:
     username = x[1]
     firstName = x[10].split(" ")[0]
     lastName = x[11]
-    phone = x[20].replace('.', '9').replace('-', '').replace(' ', '')
+    phone = x[19].replace('.', '9').replace('-', '').replace(' ', '')
     
     if phone == "":
         continue
