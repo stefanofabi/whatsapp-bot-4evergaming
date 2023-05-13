@@ -2,13 +2,15 @@ import config
 import datetime
 import requests
 import template_message
+import json
+import time
 
 currentDate = datetime.datetime.now()
 currentDate = currentDate.year
 
 access = config.db.cursor()
 # tcadmin guarda los datetime en utc
-access.execute("SELECT user_id, user_name, date_sub(last_login, INTERVAL 180 MINUTE) AS last_login, last_login_ip, first_name, last_name, country, home_phone FROM tc_users WHERE home_phone <> '' AND last_login >= date_add(now(), INTERVAL 175 minute)")
+access.execute("SELECT user_id, user_name, date_format(date_sub(last_login, INTERVAL 180 MINUTE), '%d %M %Y %k:%iHs.') AS last_login, last_login_ip, first_name, last_name, country, home_phone FROM tc_users WHERE home_phone <> '' AND last_login >= date_add(now(), INTERVAL 175 minute)")
 clients = access.fetchall()
 for x in clients:   
     username = x[1]
@@ -31,9 +33,16 @@ for x in clients:
     
     lastlogin = x[2]
     ip = x[3]
+
     messageToSend = template_message.user_login.format(firstName = firstName,lastName = lastName,phone = phone, lastlogin = lastlogin, ip = ip, username = username)
     url = config.api_endpoint + '/api/send'
     data = {'phone': phone, 'message': messageToSend, 'token': config.api_token}
-    sendMessage = requests.post(url, json = data)
+    sendMessage = requests.post(url, json = data).json()
 
-    print(sendMessage.text.encode("utf-8"))
+    if (sendMessage["error"]):
+        print("Error al enviar el mensaje al usuario #" + str(x[0]))
+    else:
+        print("Mensaje enviado al usuario #" + str(x[0])) 
+
+    # demoramos 1 segundo el proximo mensaje
+    time.sleep(1)
