@@ -3,19 +3,17 @@ import requests
 import template_message
 
 access = config.db.cursor()
-access.execute("SELECT * FROM tc_users")
+access.execute("SELECT * FROM tc_users where home_phone <> ''")
 resultUsers = access.fetchall()
 for user in resultUsers:
-    sql = "SELECT * FROM tc_tasks WHERE last_run_time >= date_sub(now(), INTERVAL 5 MINUTE) AND user_id = %s"
+    # tcadmin guarda los datetime en utc
+    sql = "SELECT task_id, display_name FROM tc_tasks WHERE last_run_time >= date_add(now(), INTERVAL 175 MINUTE) AND user_id = %s"
     access.execute(sql, (user[0],))
     resultTasks = access.fetchall()
 
     firstName = user[10].split(" ")[0]
     lastName = user[11]
     phone = user[19].replace('.', '9').replace('-', '').replace(' ', '')
-
-    if phone == "":
-        continue
 
     if (user[17] == "AR"): 
         phone = "+549" + phone
@@ -32,7 +30,7 @@ for user in resultUsers:
     
     tasks = ""
     for task in resultTasks:
-        tasks = "[" + str(task[0]) + "] " + task[3] + "\n"
+        tasks = "[" + str(task[0]) + "] " + task[1] + "\n"
 
     if (tasks == ""):
         continue
