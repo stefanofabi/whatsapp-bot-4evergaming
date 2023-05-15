@@ -9,14 +9,15 @@ currentDate = datetime.datetime.now()
 currentDate = currentDate.year
 
 access = config.db.cursor()
-access.execute("SELECT id, firstname, lastname, email, phonenumber, date_format(lastlogin, '%d %M %Y %k:%iHs.') as lastlogin, ip FROM tblclients WHERE lastlogin >= date_sub(now(), INTERVAL 5 minute)")
+access.execute("SELECT tblusers.id AS USER_id, tblusers.email, tblusers.last_ip, tblclients.id AS client_id, tblclients.firstname, tblclients.lastname, phonenumber, date_format(tblusers_clients.last_login, '%d %M %Y %k:%iHs.') as last_login FROM tblusers INNER JOIN tblusers_clients  ON tblusers.id = tblusers_clients.auth_user_id INNER JOIN tblclients ON tblusers_clients.client_id = tblclients.id WHERE tblusers_clients.last_login >= date_sub(now(), INTERVAL 5 minute)")
 clients = access.fetchall()
+
 for client in clients:   
-    firstName = client[1].split(" ")[0]
-    email = client[3]
-    phone = client[4].replace('.', '9').replace('-', '').replace(' ', '')
-    lastlogin = client[5]
-    ip = client[6]
+    firstName = client[4].split(" ")[0]
+    email = client[1]
+    phone = client[6].replace('.', '9').replace('-', '').replace(' ', '')
+    lastlogin = client[7]
+    ip = client[2]
 
     messageToSend = template_message.client_area_login.format(firstName = firstName, email = email, lastlogin = lastlogin, ip = ip)
     url = config.api_endpoint + '/api/send'
