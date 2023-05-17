@@ -46,6 +46,7 @@ $ crontab -e
 
 */5 * * * * cd /root/whatsapp-bot-4evergaming/tcadmin && /usr/bin/python3 user_login.py
 */60 * * * * cd /root/whatsapp-bot-4evergaming/tcadmin && /usr/bin/python3 last_activity.py
+*/5 * * * * cd /root/whatsapp-bot-4evergaming/tcadmin && /usr/bin/python3 server_started.py
 ```
 
 6. Por ultimo iniciar la aplicación en segundo plano
