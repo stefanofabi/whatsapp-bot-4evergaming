@@ -28,7 +28,7 @@ for invoice in resultInvoices:
         currency = "USD" if (client[4] == "1") else "ARS"
 
         # pertenece al debito automatico
-        if client[5] == 5:
+        if client[5] == 1:
             messageToSend = template_message.invoice_auto_debit.format(firstName = firstName, invoiceNumber = invoiceNumber, duedate = duedate, duetotal = duetotal, currency = currency)
         else:
             messageToSend = template_message.invoice_unpaid.format(firstName = firstName, invoiceNumber = invoiceNumber, duedate = duedate, duetotal = duetotal, currency = currency) 
