@@ -12,7 +12,7 @@ access = config.db.cursor()
 access.execute("SELECT tblorders.* FROM tblorders INNER JOIN tblinvoices ON tblorders.invoiceid = tblinvoices.id WHERE tblorders.status = 'Pending' AND tblinvoices.status = 'Unpaid' AND DATE_FORMAT(tblorders.date, '%Y-%m-%d') = DATE_FORMAT(date_sub(now(), INTERVAL 1 day), '%Y-%m-%d')")
 resultOrders = access.fetchall()
 for order in resultOrders:
-    sql = "SELECT id, firstname, lastname, phonenumber FROM tblclients WHERE id = %s"
+    sql = "SELECT id, firstname, lastname, phonenumber FROM tblclients WHERE id = %s and email_preferences like '%product%:1%'"
     access.execute(sql, (order[2],))
     resultClients = access.fetchall()
 

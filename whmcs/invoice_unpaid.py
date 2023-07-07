@@ -4,6 +4,7 @@ import requests
 import template_message
 import json
 import time
+import math
 
 currentDate = datetime.datetime.now()
 currentDate = currentDate.year
@@ -16,8 +17,9 @@ for invoice in resultInvoices:
     invoiceNumber = invoice[0]
     duedate = invoice[2]
     duetotal = invoice[3]
+    discountAmount = math.ceil(invoice[3] * 0.90)
 
-    sql = "SELECT id, firstname, lastname, phonenumber, currency, groupid FROM tblclients WHERE id = %s"
+    sql = "SELECT id, firstname, lastname, phonenumber, currency, groupid FROM tblclients WHERE id = %s and email_preferences like '%invoice%:1%'"
     access.execute(sql, (invoice[1],))
     resultClients = access.fetchall()
 
@@ -31,7 +33,7 @@ for invoice in resultInvoices:
         if client[5] == 1:
             messageToSend = template_message.invoice_auto_debit.format(firstName = firstName, invoiceNumber = invoiceNumber, duedate = duedate, duetotal = duetotal, currency = currency)
         else:
-            messageToSend = template_message.invoice_unpaid.format(firstName = firstName, invoiceNumber = invoiceNumber, duedate = duedate, duetotal = duetotal, currency = currency) 
+            messageToSend = template_message.invoice_unpaid.format(firstName = firstName, invoiceNumber = invoiceNumber, duedate = duedate, duetotal = duetotal, discountAmount = discountAmount, currency = currency) 
         
         url = config.api_endpoint + '/api/send'
         data = {'phone': phone, 'message': messageToSend, 'token': config.api_token}

@@ -15,7 +15,7 @@ resultInvoices = access.fetchall()
 for invoice in resultInvoices:
     invoiceNumber = invoice[0]
 
-    sql = "SELECT id, firstname, lastname, phonenumber, currency FROM tblclients WHERE id = %s"
+    sql = "SELECT id, firstname, lastname, phonenumber, currency FROM tblclients WHERE id = %s and email_preferences like '%invoice%:1%'"
     access.execute(sql, (invoice[1],))
     resultClients = access.fetchall()
 
