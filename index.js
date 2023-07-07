@@ -48,7 +48,7 @@ client.on('ready', () => {
         const message = req.body.message;
 		const token = req.body.token;
 		
-		if (token != API_TOKEN) 
+		if (token != API_TOKEN) {
 			return res.status(200).json({
                 error: true,
                 data: {
@@ -56,23 +56,27 @@ client.on('ready', () => {
                 meta: error,
                 },
             });
-		
+		}
+
         client.sendMessage(phone.substring(1) + "@c.us", message)
-            .then(response => {
-            res.status(200).json({
-                error: false,
-                data: {
-                message: 'success',
-                meta: response,
-                },
-            });
-            })
-            .catch(error => {
-            res.status(200).json({
-                error: true,
-                data: {
-                message: 'error',
-                meta: error,
+        .then(response => {
+                console.log('[200] Mensaje enviado a ' +phone);
+
+                res.status(200).json({
+                    error: false,
+                    data: {
+                    message: 'success',
+                    meta: response,
+                    },
+                });
+        }).catch(error => {
+            console.log('[500] Error al enviar a ' +phone);
+
+            res.status(500).json({
+                    error: true,
+                    data: {
+                    message: 'error',
+                    meta: error,
                 },
             });
         });
