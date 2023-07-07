@@ -55,4 +55,5 @@ $ npm start &
 ```
 
 # Consideraciones
-Configurar las tareas diarias para después de haberse ejecutado el cron de WHMCS. Además no se deben exponer los archivos frente a un servidor web.
+Configurar las tareas diarias para después de haberse ejecutado el cron de WHMCS.
+Para generar el código QR no ejecutar el script con screen
