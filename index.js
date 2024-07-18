@@ -7,7 +7,7 @@ const express = require('express');
 const app = express();
 const port = 8080;
 
-const API_TOKEN = "FOREVERGAMING-WSP-BOT"; 
+const API_TOKEN = ""; 
 
 if (!API_TOKEN) {
 	console.error("ERROR: API_TOKEN no esta definido!");
