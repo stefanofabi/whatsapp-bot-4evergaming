@@ -25,7 +25,7 @@ for invoice in resultInvoices:
     duetotal = invoice[3]
     discountAmount = math.ceil(invoice[3] * 0.90)
 
-    sql = "SELECT id, firstname, lastname, phonenumber, currency FROM tblclients WHERE id = %s and email_preferences like '%invoice%:1%' and groupid <> 1"
+    sql = "SELECT id, firstname, lastname, phonenumber, currency FROM tblclients WHERE id = %s and email_preferences like '%invoice%:%1%' and groupid <> 1"
     access.execute(sql, (invoice[1],))
     resultClients = access.fetchall()
 

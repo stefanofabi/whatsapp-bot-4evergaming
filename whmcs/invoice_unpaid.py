@@ -20,7 +20,7 @@ for invoice in resultInvoices:
     duetotal = Decimal(str(invoice[3]))  # Convertir a Decimal para precisión financiera
     discountAmount = math.ceil(duetotal * Decimal('0.90'))  # Aplicar descuento y redondear hacia arriba
 
-    sql = "SELECT id, firstname, lastname, phonenumber, currency, groupid FROM tblclients WHERE id = %s and email_preferences like '%invoice%:1%'"
+    sql = "SELECT id, firstname, lastname, phonenumber, currency, groupid FROM tblclients WHERE id = %s and email_preferences like '%invoice%:%1%'"
     access.execute(sql, (invoice[1],))
     resultClients = access.fetchall()
 
