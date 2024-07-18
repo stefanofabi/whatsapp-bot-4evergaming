@@ -5,6 +5,7 @@ import template_message
 import json
 import time
 import math
+from decimal import Decimal
 
 currentDate = datetime.datetime.now()
 currentDate = currentDate.year
@@ -16,8 +17,8 @@ resultInvoices = access.fetchall()
 for invoice in resultInvoices:
     invoiceNumber = invoice[0]
     duedate = invoice[2]
-    duetotal = invoice[3]
-    discountAmount = math.ceil(invoice[3] * 0.90)
+    duetotal = Decimal(str(invoice[3]))  # Convertir a Decimal para precisión financiera
+    discountAmount = math.ceil(duetotal * Decimal('0.90'))  # Aplicar descuento y redondear hacia arriba
 
     sql = "SELECT id, firstname, lastname, phonenumber, currency, groupid FROM tblclients WHERE id = %s and email_preferences like '%invoice%:1%'"
     access.execute(sql, (invoice[1],))
