@@ -1,9 +1,9 @@
-// Package yang di gunakan
-const { Client, LocalAuth, MessageMedia } = require("whatsapp-web.js");
+const { Client, LocalAuth, MessageMedia } = require('whatsapp-web.js');
 const qrcode = require('qrcode-terminal');
-
-// express api
 const express = require('express');
+const cors = require('cors');
+const morgan = require('morgan');
+
 const app = express();
 const port = 8080;
 
@@ -13,6 +13,11 @@ if (!API_TOKEN) {
 	console.error("ERROR: API_TOKEN no esta definido!");
     process.exit(1);
 }
+
+app.use(express.json());
+app.use(express.urlencoded({extended: false}));
+app.use(cors());
+app.use(morgan('dev'))
 
 // Creating a New Client
 const client = new Client({
@@ -30,10 +35,8 @@ client.on('qr', (qr) => {
 
 //Process Where Whatsapp-web.js Ready to use
 client.on('ready', () => {
-    console.log('Ready !');
-    app.use(express.json());
-    app.use(express.urlencoded({extended: true}));
-	
+    console.log('WhatsApp Ready !');
+
     app.post('/api/send', (req, res) => {
         // res.send('Hello World, from express');
         const phone = req.body.phone;
