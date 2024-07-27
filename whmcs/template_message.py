@@ -5,10 +5,62 @@
 # Fecha de vencimiento de la Factura: {duedate}
 # Monto adeudado: {duetotal}
 
-invoice_unpaid = "Se generó una nueva factura *#{invoiceNumber}*.\n\nIngresá a https://clientes.4evergaming.com.ar/viewinvoice.php?id={invoiceNumber} y realizá un pago de *${duetotal} {currency}* antes del *{duedate}*. \n\n Pagá ahora y aprovecha un 10% de descuento por transferencia:\n\n- - - - - - - - - - - - - - - -\n*TITULAR:* STEFANO FABI\n*CVU:* 0000003100090739102124\n*Alias:* 4evergaming\n*Monto (10% descuento):* {discountAmount}\n- - - - - - - - - - - - - - - -\n\nPor favor enviar el comprobante de la transferencia 🙏\n\nGracias" 
-invoice_paid = "La factura *#{invoiceNumber}* ha sido PAGADA ✅🙌" 
-invoice_duedate = "La factura *#{invoiceNumber}* se encuentra dentro del período de gracia 😥.\n\nPara evitar suspensiones en el servicio, por favor iniciá sesión en https://clientes.4evergaming.com.ar/viewinvoice.php?id={invoiceNumber} y realizá un pago de *${duetotal} {currency}* antes del *{duedate}*. \n\n Pagá ahora y aprovecha un 10% de descuento por transferencia:\n\n- - - - - - - - - - - - - - - -\n*TITULAR:* STEFANO FABI\n*CVU:* 0000003100090739102124\n*Alias:* 4evergaming\n*Monto (10% descuento):* {discountAmount}\n- - - - - - - - - - - - - - - -\n\nPor favor enviar el comprobante de la transferencia 🙏\n\nGracias" 
-invoice_comingTerminate = "Atención 🚨🚨 la factura *#{invoiceNumber}* todavía se encuentra en estado *NO PAGADA* ⚠️⚠️.\n\nPara evitar la cancelación del servicio, por favor iniciá sesión en https://clientes.4evergaming.com.ar y realizá un pago de *${duetotal} {currency}* antes de *hoy* ☢️. \n\n Paga ahora y aprovecha un 10% de descuento pagando por transferencia:\n\n- - - - - - - - - - - - - - - -\n*TITULAR:* STEFANO FABI\n*CVU:* 0000003100090739102124\n*Alias:* 4evergaming\n*Monto (10% descuento):* {discountAmount}\n- - - - - - - - - - - - - - - -\n\nPor favor enviar el comprobante de la transferencia 🙏\n\nGracias" 
-invoice_auto_debit = "Dentro de las próximas horas ⌛ se realizará el débito correspondiente de tu factura *#{invoiceNumber}* desde tu cuenta 🏦 💳. Le solicitamos que por favor mantenga un saldo de *${duetotal} {currency}* para evitar inconvenientes 🙏\n\nMuchas gracias! 😊" 
+invoice_unpaid = """
+🤖 Se generó una nueva factura *#{invoiceNumber}*.\n\n
+
+Ingresá a https://clientes.4evergaming.com.ar/viewinvoice.php?id={invoiceNumber} y realizá un pago de *${duetotal} {currency}* antes del *{duedate}*.
+""" 
+
+invoice_unpaid_transferencia_bancaria = """
+🤖 Se generó una nueva factura *#{invoiceNumber}*.\n\n
+
+Pagá ahora y aprovecha un 10% de descuento por transferencia:\n
+*TITULAR:* STEFANO FABI \n
+*CVU:* 0000003100090739102124 \n
+*Alias:* 4evergaming \n
+*Monto (10% descuento):* ~${duetotal}~ ${discountAmount} \n\n
+
+Por favor enviar el comprobante de la transferencia 🙏
+""" 
+
+
+invoice_paid = "🤖 La factura *#{invoiceNumber}* ha sido PAGADA ✅🙌" 
+
+invoice_duedate = """
+🤖 La factura *#{invoiceNumber}* se encuentra vencida 😥.\n\n
+
+Para evitar la suspension del servicio, por favor iniciá sesión en https://clientes.4evergaming.com.ar/viewinvoice.php?id={invoiceNumber} y realizá un pago de *${duetotal} {currency}* antes del *{duedate}*. \n\n 
+"""
+
+invoice_duedate_transferencia_bancaria = """
+🤖 La factura *#{invoiceNumber}* se encuentra vencida 😥.\n\n
+
+Pagá ahora y aprovecha un 10% de descuento por transferencia:\n
+*TITULAR:* STEFANO FABI\n
+*CVU:* 0000003100090739102124\n
+*Alias:* 4evergaming\n
+*Monto (10% descuento):* ~${duetotal}~ ${discountAmount} \n\n
+
+Por favor enviar el comprobante de la transferencia 🙏
+"""
+
+invoice_comingTerminate = """
+🤖 Atención 🚨🚨 la factura *#{invoiceNumber}* todavía se encuentra en estado *NO PAGADA*. \n\n
+Para evitar la cancelación del servicio, por favor iniciá sesión en https://clientes.4evergaming.com.ar y realizá un pago de *${duetotal} {currency}* antes de *hoy*.
+"""
+
+invoice_comingTerminate_transferencia_bancaria = """
+🤖 Atención 🚨🚨 la factura *#{invoiceNumber}* todavía se encuentra en estado *NO PAGADA*. \n\n
+
+Para evitar la cancelación del servicio pagá antes de *hoy*: \n
+*TITULAR:* STEFANO FABI \n
+*CVU:* 0000003100090739102124 \n
+*Alias:* 4evergaming \n
+*Monto (10% descuento):* ~${duetotal}~ ${discountAmount} \n\n
+
+Por favor enviar el comprobante de la transferencia 🙏
+"""
+
+invoice_auto_debit = "🤖 Dentro de las próximas horas ⌛ se realizará el débito correspondiente de tu factura *#{invoiceNumber}* desde tu cuenta 🏦 💳. Le solicitamos que por favor mantenga un saldo de *${duetotal} {currency}* para evitar inconvenientes 🙏" 
 order_pending = "Hola *{firstName}* 👋 He notado que generaste un pedido en nuestra tienda y no hiciste el pago correspondiente. ¿Hubo algún problema en el proceso de pago que no te permitió finalizarlo? 🤔 Por favor, hacemelo saber para ayudarte y así poder ofrecerte el servicio que necesitás. Estoy a tu disposición para cualquier consulta o duda que tengas. Saludos!"
-client_area_login = "Nuevo inicio de sesión en el área de clientes 🚨\n\n*Correo:* {email} \n*Fecha:* {lastlogin}\n*IP:* {ip}"
+client_area_login = "🤖 Nuevo inicio de sesión en el área de clientes 🚨\n\n*Correo:* {email} \n*Fecha:* {lastlogin}\n*IP:* {ip}"

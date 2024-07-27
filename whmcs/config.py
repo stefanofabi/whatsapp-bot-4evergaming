@@ -23,3 +23,16 @@ db = mysql.connector.connect(
   password = pass_db,
   database = name_db
 )
+
+# constantes
+GRUPO_DEBITO_AUTOMATICO = 1
+
+CURRENCY_CODES = {
+    "1": "USD",
+    "2": "ARS",
+    "3": "CLP",
+    "4": "URU",
+    "5": "BRL",
+    "6": "PYG",
+    "7": "EUR",
+}
