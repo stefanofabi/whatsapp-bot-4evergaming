@@ -11,7 +11,12 @@ currentDate = datetime.datetime.now()
 currentDate = currentDate.year
 
 access = config.db.cursor()
-access.execute("SELECT id, userid, DATE_FORMAT(duedate, '%e %M %Y'), total FROM tblinvoices WHERE status = 'Unpaid' AND duedate = CURDATE()")
+sql = """
+SELECT id, userid, DATE_FORMAT(duedate, '%e %M %Y'), total 
+FROM tblinvoices 
+WHERE status = 'Unpaid' AND duedate = CURDATE()
+"""
+access.execute(sql)
 resultInvoices = access.fetchall()
 
 for invoice in resultInvoices:
@@ -20,7 +25,11 @@ for invoice in resultInvoices:
     duetotal = Decimal(str(invoice[3]))  # Convertir a Decimal para precisión financiera
     discountAmount = math.ceil(duetotal * Decimal('0.90'))  # Aplicar descuento y redondear hacia arriba
 
-    sql = "SELECT id, firstname, lastname, phonenumber, currency, groupid, defaultgateway FROM tblclients WHERE id = %s and email_preferences like '%invoice%:%1%'"
+    sql = """
+    SELECT id, firstname, lastname, phonenumber, currency, groupid, defaultgateway 
+    FROM tblclients 
+    WHERE id = %s and email_preferences like '%invoice%:%1%'
+    """
     access.execute(sql, (invoice[1],))
     resultClients = access.fetchall()
 

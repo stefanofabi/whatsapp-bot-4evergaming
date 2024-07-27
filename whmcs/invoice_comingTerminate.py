@@ -16,7 +16,12 @@ today = date.today()
 terminateDate = [today - timedelta(days = int(terminateConf[0][0])-int(dayBeforeTerminate))]
 
 access = config.db.cursor()
-access.execute("SELECT id, userid, DATE_FORMAT(duedate, '%e %M %Y'), total FROM tblinvoices WHERE status = 'Unpaid' AND duedate = %s;",terminateDate)
+sql = """
+SELECT id, userid, DATE_FORMAT(duedate, '%e %M %Y'), total 
+FROM tblinvoices 
+WHERE status = 'Unpaid' AND duedate = %s
+"""
+access.execute(sql, terminateDate)
 resultInvoices = access.fetchall()
 
 for invoice in resultInvoices:

@@ -9,7 +9,17 @@ currentDate = datetime.datetime.now()
 currentDate = currentDate.year
 
 access = config.db.cursor()
-access.execute("SELECT tblusers.id AS USER_id, tblusers.email, tblusers.last_ip, tblclients.id AS client_id, tblclients.firstname, tblclients.lastname, phonenumber, date_format(tblusers_clients.last_login, '%d %M %Y %k:%iHs.') as last_login FROM tblusers INNER JOIN tblusers_clients  ON tblusers.id = tblusers_clients.auth_user_id INNER JOIN tblclients ON tblusers_clients.client_id = tblclients.id WHERE tblusers_clients.last_login >= date_sub(now(), INTERVAL 5 minute) and email_preferences like '%general%:%1%'")
+sql = """
+SELECT tblusers.id AS USER_id, tblusers.email, tblusers.last_ip, 
+tblclients.id AS client_id, tblclients.firstname, tblclients.lastname, phonenumber, 
+date_format(tblusers_clients.last_login, '%d %M %Y %k:%iHs.') as last_login 
+FROM tblusers 
+INNER JOIN tblusers_clients  ON tblusers.id = tblusers_clients.auth_user_id 
+INNER JOIN tblclients ON tblusers_clients.client_id = tblclients.id 
+WHERE tblusers_clients.last_login >= date_sub(now(), INTERVAL 5 minute) 
+and email_preferences like '%general%:%1%'
+"""
+access.execute(sql)
 clients = access.fetchall()
 
 for client in clients:   

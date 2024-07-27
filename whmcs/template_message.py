@@ -61,6 +61,25 @@ Para evitar la cancelación del servicio pagá antes de *hoy*: \n
 Por favor enviar el comprobante de la transferencia 🙏
 """
 
-invoice_auto_debit = "🤖 Dentro de las próximas horas ⌛ se realizará el débito correspondiente de tu factura *#{invoiceNumber}* desde tu cuenta 🏦 💳. Le solicitamos que por favor mantenga un saldo de *${duetotal} {currency}* para evitar inconvenientes 🙏" 
-order_pending = "Hola *{firstName}* 👋 He notado que generaste un pedido en nuestra tienda y no hiciste el pago correspondiente. ¿Hubo algún problema en el proceso de pago que no te permitió finalizarlo? 🤔 Por favor, hacemelo saber para ayudarte y así poder ofrecerte el servicio que necesitás. Estoy a tu disposición para cualquier consulta o duda que tengas. Saludos!"
-client_area_login = "🤖 Nuevo inicio de sesión en el área de clientes 🚨\n\n*Correo:* {email} \n*Fecha:* {lastlogin}\n*IP:* {ip}"
+invoice_auto_debit = """
+🤖 Dentro de las próximas horas ⌛ se realizará el débito correspondiente de tu factura *#{invoiceNumber}* \n
+Le solicitamos que por favor mantenga un saldo de *${duetotal} {currency}* para evitar inconvenientes 🙏
+"""
+order_pending = """
+Hola *{firstName}* 👋 He notado que generaste un pedido en nuestra tienda y no hiciste el pago correspondiente. \n
+¿Hubo algún problema en el proceso de pago que no te permitió finalizarlo? 🤔 \n\n
+
+Por favor, hacemelo saber para ayudarte y así poder ofrecerte el servicio que necesitás. \n
+Estoy a tu disposición para cualquier consulta o duda que tengas. \n\n
+
+Saludos!
+"""
+
+client_area_login = """
+🤖 Nuevo inicio de sesión en el área de clientes 🚨\n\n
+
+*Correo:* {email} \n
+*Fecha:* {lastlogin}\n
+*IP:* {ip}
+"""
+
