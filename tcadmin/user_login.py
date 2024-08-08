@@ -10,7 +10,12 @@ currentDate = currentDate.year
 
 access = config.db.cursor()
 # tcadmin guarda los datetime en utc
-access.execute("SELECT user_id, user_name, date_format(date_sub(last_login, INTERVAL 180 MINUTE), '%d %M %Y %k:%iHs.') AS last_login, last_login_ip, first_name, last_name, country, home_phone FROM tc_users WHERE home_phone <> '' AND last_login >= date_add(now(), INTERVAL 175 minute)")
+sql = """
+SELECT user_id, user_name, date_format(date_sub(last_login, INTERVAL 180 MINUTE), '%d %M %Y %k:%iHs.') AS last_login, last_login_ip, first_name, last_name, country, home_phone 
+FROM tc_users 
+WHERE home_phone <> '' AND last_login >= date_add(now(), INTERVAL 175 minute)
+"""
+access.execute(sql)
 clients = access.fetchall()
 for x in clients:   
     username = x[1]

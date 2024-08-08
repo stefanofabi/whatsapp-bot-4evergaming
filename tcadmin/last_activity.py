@@ -5,11 +5,21 @@ import json
 import time
 
 access = config.db.cursor()
-access.execute("SELECT user_id, user_name, date_format(date_sub(last_login, INTERVAL 180 MINUTE), '%d %M %Y %k:%i') AS last_login, last_login_ip, first_name, last_name, country, home_phone FROM tc_users where home_phone <> ''")
+sql = """
+SELECT user_id, user_name, date_format(date_sub(last_login, INTERVAL 180 MINUTE), 
+'%d %M %Y %k:%i') AS last_login, last_login_ip, first_name, last_name, country, home_phone 
+FROM tc_users 
+WHERE home_phone <> '' 
+"""
+access.execute(sql)
 resultUsers = access.fetchall()
 for user in resultUsers:
     # tcadmin guarda los datetime en utc
-    sql = "SELECT * FROM tc_tasks WHERE last_run_time >= date_add(now(), INTERVAL 115 MINUTE) AND user_id = %s"
+    sql = """
+    SELECT * 
+    FROM tc_tasks 
+    WHERE last_run_time >= date_add(now(), INTERVAL 115 MINUTE) AND user_id = %s
+    """
     access.execute(sql, (user[0],))
     resultTasks = access.fetchall()
 
@@ -31,8 +41,14 @@ for user in resultUsers:
         continue
 
     tasks = ""
+    first_task = True
+
     for task in resultTasks:
-        tasks = tasks + "\n + " + task[3]
+        if first_task:
+            tasks = "+ " + task[3]
+            first_task = False
+        else:
+            tasks += "\n + " + task[3]
 
     # no hay nada para enviar al usuario
     if (tasks == ""):

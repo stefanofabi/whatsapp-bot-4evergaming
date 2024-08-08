@@ -10,7 +10,15 @@ currentDate = currentDate.year
 
 access = config.db.cursor()
 # tcadmin guarda los datetime en utc
-access.execute("SELECT tc_users.user_id, tc_users.first_name, tc_users.last_name, tc_users.country, tc_users.home_phone, tc_game_services.service_id, tc_game_services.ip_address, tc_game_services.game_port, tc_services.display_name, date_format(date_sub(tc_game_service_live_stats.start_time, INTERVAL 180 MINUTE), '%d %M %Y %k:%iHs.') AS start_time FROM tc_game_service_live_stats INNER JOIN tc_services ON tc_services.service_id = tc_game_service_live_stats.service_id INNER JOIN tc_game_services ON tc_game_services.service_id = tc_services.service_id INNER JOIN tc_users ON tc_users.user_id = tc_services.user_id WHERE tc_game_service_live_stats.start_time >= date_add(now(), INTERVAL 175 MINUTE) and tc_users.home_phone <> ''")
+sql = """
+SELECT tc_users.user_id, tc_users.first_name, tc_users.last_name, tc_users.country, tc_users.home_phone, tc_game_services.service_id, tc_game_services.ip_address, tc_game_services.game_port, tc_services.display_name, date_format(date_sub(tc_game_service_live_stats.start_time, INTERVAL 180 MINUTE), '%d %M %Y %k:%iHs.') AS start_time 
+FROM tc_game_service_live_stats 
+INNER JOIN tc_services ON tc_services.service_id = tc_game_service_live_stats.service_id 
+INNER JOIN tc_game_services ON tc_game_services.service_id = tc_services.service_id 
+INNER JOIN tc_users ON tc_users.user_id = tc_services.user_id 
+WHERE tc_game_service_live_stats.start_time >= date_add(now(), INTERVAL 175 MINUTE) and tc_users.home_phone <> ''
+"""
+access.execute(sql)
 clients = access.fetchall()
 
 for client in clients:   
