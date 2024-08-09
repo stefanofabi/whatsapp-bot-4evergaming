@@ -80,8 +80,16 @@ client.on('ready', () => {
 });
 
 //The process where the client disconnects from Whatsapp-web
-client.on('disconnected', (reason) => {
-    console.log('disconnect Whatsapp-bot', reason);
+var reInitializeCount = 1;
+client.on("disconnected", (reason) => {
+  if (reason === "NAVIGATION") 
+  {
+    client.initialize();
+    return;
+  }
+  
+  console.error("WhatsApp Bot disconnected");
+  process.exit(1);
 });
 
 client.initialize();

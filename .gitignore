@@ -2,3 +2,4 @@ node_modules
 .wwebjs_auth
 /.wwebjs_cache
 /whmcs/__pycache__
+/tcadmin/__pycache__

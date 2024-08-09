@@ -14,7 +14,7 @@ user_login = """
 """
 
 last_activity = """
-🤖 Nueva actividad en tu cuenta TCAdmin \n
+🤖 Nueva actividad en TCAdmin \n
 
 {tasks}
 """
