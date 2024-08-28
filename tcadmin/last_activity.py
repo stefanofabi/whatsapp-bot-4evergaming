@@ -18,7 +18,9 @@ for user in resultUsers:
     sql = """
     SELECT * 
     FROM tc_tasks 
-    WHERE last_run_time >= date_add(now(), INTERVAL 115 MINUTE) AND user_id = %s
+    WHERE last_run_time >= date_add(now(), INTERVAL 115 MINUTE) AND 
+    status = 3 AND 
+    user_id = %s 
     """
     access.execute(sql, (user[0],))
     resultTasks = access.fetchall()
