@@ -1,59 +1,68 @@
 # WhatsApp Bot
-Soy un Bot que envía notificaciones y recordatorios por WhatsApp.
+I am a Bot that sends notifications and reminders via WhatsApp.
 
-# Instalación
-1. Clonar el repositorio e instalar las dependencias
-```
-$ git clone https://github.com/stefanofabi/whatsapp-bot-4evergaming.git
-$ apt install python3-pip
-$ pip install mysql-connector-python
+# Installation
+```bash
+# Install linux dependencies
+apt install git python3-venv python3-pip -y
+
+# Clone my repository
+cd /root
+git clone https://github.com/stefanofabi/whatsapp-bot-4evergaming.git
+cd whastapp-bot-4evergaming
+
+# Enter the virtual environment
+python3 -m venv myenv
+source myenv/bin/activate
+
+# Install python dependencies
+pip install -r requirements.txt
+
+# Configure the MySQL WhatsApp database
+cp config.json.example config.json
+nano config.json
+
+# Import the mysql database
+mysql -u whatsapp_messages -p whatsapp_messages < /root/whatsapp-bot-4evergaming/database.sql
+
+# Install npm dependencies
+npm install
+
+# Configure the MySQL tcadmin and whmcs database
+export DB_WHMCS_HOST='localhost'
+export DB_WHMCS_NAME='whmcs'
+export DB_WHMCS_USER='whmcs'
+export DB_WHMCS_PASS=''
+
+export DB_TCADMIN_HOST='localhost'
+export DB_TCADMIN_NAME='tcadmin'
+export DB_TCADMIN_USER='tcadmin'
+export DB_TCADMIN_PASS=''
+
+export DB_WHATSAPP_HOST='localhost'
+export DB_WHATSAPP_NAME='whatsapp_messages'
+export DB_WHATSAPP_USER='whatsapp_messages'
+export DB_WHATSAPP_PASS=''
+
+# Run the whatsapp bot
+npm start
 ```
 
-2. Descargar los paquetes 
-```
-$ npm install
-```
+Then set up a cron every 5 minutes and set permissions:
+```bash
+chmod +x /root/whatsapp-bot-4evergaming/run_every_5_minutes.sh
+chmod +x /root/whatsapp-bot-4evergaming/run_every_60_minutes.sh
+chmod +x /root/whatsapp-bot-4evergaming/run_every_at_11_am.sh
 
-3. Configurar el token de acceso a la API
-```
-$ nano index.js
-```
 
-3. Configurar la conexión a la base de datos y colocar el token API creado en el paso anterior
-```
-$ nano whmcs/config.py
-```
-
-4. Iniciar por primera vez la aplicación y escanear el código QR que vincula con WhatsApp Web
-```
-$ npm start
-```
-
-5. Cerrar la aplicación y configurar las tareas diarias
-```
-$ crontab -e
-```
-
-```
+crontab -e
 @reboot sleep 5 && node /root/whatsapp-bot-4evergaming/index.js &
 
-*/5 * * * * cd /root/whatsapp-bot-4evergaming/whmcs && /usr/bin/python3 invoice_paid.py
-*/5 * * * * cd /root/whatsapp-bot-4evergaming/whmcs && /usr/bin/python3 client_area_login.py
-0 11 * * * cd /root/whatsapp-bot-4evergaming/whmcs && /usr/bin/python3 invoice_unpaid.py
-0 11 * * * cd /root/whatsapp-bot-4evergaming/whmcs && /usr/bin/python3 invoice_duedate.py
-0 11 * * * cd /root/whatsapp-bot-4evergaming/whmcs && /usr/bin/python3 invoice_comingTerminate.py
-0 11 * * * cd /root/whatsapp-bot-4evergaming/whmcs && /usr/bin/python3 order_pending.py
+*/5 * * * * /root/whatsapp-bot-4evergaming/run_every_5_minutes.sh
+*/60 * * * * /root/whatsapp-bot-4evergaming/run_every_60_minutes.sh
 
-*/5 * * * * cd /root/whatsapp-bot-4evergaming/tcadmin && /usr/bin/python3 user_login.py
-*/60 * * * * cd /root/whatsapp-bot-4evergaming/tcadmin && /usr/bin/python3 last_activity.py
-*/5 * * * * cd /root/whatsapp-bot-4evergaming/tcadmin && /usr/bin/python3 server_started.py
+0 11 * * * /root/whatsapp-bot-4evergaming/run_every_at_11_am.sh
 ```
 
-6. Por ultimo iniciar la aplicación en segundo plano
-```
-$ npm start & 
-```
-
-# Consideraciones
-Configurar las tareas diarias para después de haberse ejecutado el cron de WHMCS.
-Para generar el código QR no ejecutar el script con screen
+# Considerations
+Set up daily tasks for after WHMCS cron has run

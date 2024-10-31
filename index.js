@@ -1,95 +1,87 @@
-const { Client, LocalAuth, MessageMedia } = require('whatsapp-web.js');
+const { Client, LocalAuth } = require('whatsapp-web.js');
 const qrcode = require('qrcode-terminal');
-const express = require('express');
-const cors = require('cors');
-const morgan = require('morgan');
+const mysql = require('mysql2');
+const fs = require('fs');
+const cron = require('node-cron');
 
-const app = express();
-const port = 8080;
+// Read MySQL connection configuration from config.json
+const config = JSON.parse(fs.readFileSync('config.json', 'utf8'));
 
-const API_TOKEN = ""; 
-
-if (!API_TOKEN) {
-	console.error("ERROR: API_TOKEN no esta definido!");
-    process.exit(1);
-}
-
-app.use(express.json());
-app.use(express.urlencoded({extended: false}));
-app.use(cors());
-app.use(morgan('dev'))
-
-// Creating a New Client
-const client = new Client({
-  authStrategy: new LocalAuth(),
-  puppeteer: {
-    args: ["--no-sandbox"],
-    headless: true,
-  },
+// MySQL Database connection
+const db = mysql.createConnection({
+    host: config.host,
+    user: config.user,
+    password: config.password,
+    database: config.database
 });
 
-//The whatsappjs login process uses a qrcode that will be sent by whatsapp-web.js
+// Connect to MySQL
+db.connect((err) => {
+    if (err) {
+        console.error('Error connecting to MySQL:', err);
+        process.exit(1);
+    }
+    console.log('Connected to MySQL database');
+});
+
+// Configure WhatsApp Client
+const client = new Client({
+    authStrategy: new LocalAuth(),
+    puppeteer: {
+        args: ["--no-sandbox"],
+        headless: true,
+    },
+});
+
+// Function to fetch and send messages from the database
+const fetchAndSendMessages = () => {
+    console.log('Running scheduled task to send messages');
+
+    // Query the messages from the "messages" table
+    db.query('SELECT id, phone, message FROM messages', (err, results) => {
+        if (err) {
+            console.error('Error fetching messages:', err);
+            return;
+        }
+
+        results.forEach(({ id, phone, message }) => {
+            client.sendMessage(phone.substring(1) + "@c.us", message)
+                .then(response => {
+                    console.log(`[200] Message sent to ${phone}`);
+
+                    // Delete message from database after sending
+                    db.query('DELETE FROM messages WHERE id = ?', [id], (deleteErr) => {
+                        if (deleteErr) {
+                            console.error('Error deleting message:', deleteErr);
+                        } else {
+                            console.log(`[200] Message deleted from database for ${phone}`);
+                        }
+                    });
+                })
+                .catch(error => {
+                    console.error(`[500] Error sending message to ${phone}:`, error);
+                });
+        });
+    });
+};
+
+// Event when QR is generated
 client.on('qr', (qr) => {
     qrcode.generate(qr, {small: true});
 });
 
-//Process Where Whatsapp-web.js Ready to use
+// Event when WhatsApp client is ready
 client.on('ready', () => {
-    console.log('WhatsApp Ready !');
-
-    app.post('/api/send', (req, res) => {
-        // res.send('Hello World, from express');
-        const phone = req.body.phone;
-        const message = req.body.message;
-		const token = req.body.token;
-		
-		if (token != API_TOKEN) {
-			return res.status(200).json({
-                error: true,
-                data: {
-                message: 'permiso denegado',
-                meta: error,
-                },
-            });
-		}
-
-        client.sendMessage(phone.substring(1) + "@c.us", message)
-        .then(response => {
-                console.log('[200] Mensaje enviado a ' +phone);
-
-                res.status(200).json({
-                    error: false,
-                    data: {
-                    message: 'success',
-                    meta: response,
-                    },
-                });
-        }).catch(error => {
-            console.log('[500] Error al enviar a ' +phone);
-
-            res.status(500).json({
-                    error: true,
-                    data: {
-                    message: 'error',
-                    meta: error,
-                },
-            });
-        });
-    });
-    app.listen(port, () => console.log(`Hello world app listening on port ${port}!`))
+    console.log('WhatsApp is ready!');
 });
 
-//The process where the client disconnects from Whatsapp-web
-var reInitializeCount = 1;
+// Schedule the fetch and send task to run every 5 minutes
+cron.schedule('*/5 * * * *', fetchAndSendMessages);
+
+// Event when WhatsApp client disconnects
 client.on("disconnected", (reason) => {
-  if (reason === "NAVIGATION") 
-  {
-    client.initialize();
-    return;
-  }
-  
-  console.error("WhatsApp Bot disconnected");
-  process.exit(1);
+    console.error("WhatsApp Bot disconnected:", reason);
+    process.exit(1);
 });
 
 client.initialize();

@@ -1,22 +1,25 @@
 import config
 import datetime
-import requests
-import template_message
-import json
 import time
+import template_message
 
+# Get the current year
 currentDate = datetime.datetime.now()
 currentDate = currentDate.year
 
+# Prepare the cursor to access the main database
 access = config.db.cursor()
-# tcadmin guarda los datetime en utc
+
+# Query to fetch client details
 sql = """
-SELECT tc_users.user_id, tc_users.first_name, tc_users.last_name, tc_users.country, tc_users.home_phone, tc_game_services.service_id, tc_game_services.ip_address, tc_game_services.game_port, tc_services.display_name, date_format(date_sub(tc_game_service_live_stats.start_time, INTERVAL 180 MINUTE), '%d %M %Y %k:%iHs.') AS start_time 
+SELECT tc_users.user_id, tc_users.first_name, tc_users.last_name, tc_users.country, tc_users.home_phone, 
+       tc_game_services.service_id, tc_game_services.ip_address, tc_game_services.game_port, 
+       tc_services.display_name, DATE_FORMAT(DATE_SUB(tc_game_service_live_stats.start_time, INTERVAL 180 MINUTE), '%d %M %Y %k:%iHs.') AS start_time 
 FROM tc_game_service_live_stats 
 INNER JOIN tc_services ON tc_services.service_id = tc_game_service_live_stats.service_id 
 INNER JOIN tc_game_services ON tc_game_services.service_id = tc_services.service_id 
 INNER JOIN tc_users ON tc_users.user_id = tc_services.user_id 
-WHERE tc_game_service_live_stats.start_time >= date_add(now(), INTERVAL 175 MINUTE) and tc_users.home_phone <> ''
+WHERE tc_game_service_live_stats.start_time >= DATE_ADD(NOW(), INTERVAL 175 MINUTE) AND tc_users.home_phone <> ''
 """
 access.execute(sql)
 clients = access.fetchall()
@@ -44,15 +47,18 @@ for client in clients:
     server_name = client[8]
     start_time = client[9]
 
-    messageToSend = template_message.server_started.format(firstName = firstName, phone = phone, service_id = service_id, ip_address = ip_address, game_port = game_port, server_name = server_name, start_time = start_time)
-    url = config.api_endpoint + '/api/send'
-    data = {'phone': phone, 'message': messageToSend, 'token': config.api_token}
-    sendMessage = requests.post(url, json = data).json()
+    # Prepare the message to send
+    messageToSend = template_message.server_started.format(firstName=firstName, phone=phone, service_id=service_id, ip_address=ip_address, game_port=game_port, server_name=server_name, start_time=start_time)
+    
+    # Insert the message into the database
+    insert_sql = "INSERT INTO messages (phone, message) VALUES (%s, %s)"
+    access.execute(insert_sql, (phone, messageToSend))
+    config.db.commit()  # Commit the transaction
 
-    if (sendMessage["error"]):
-        print("Error al enviar el mensaje al usuario #" + str(client[0]))
-    else:
-        print("Mensaje enviado al usuario #" + str(client[0])) 
+    print("Message saved in the database for user #" + str(client[0])) 
 
-    # demoramos 1 segundo el proximo mensaje
+    # Wait 1 second before processing the next message
     time.sleep(1)
+
+# Close the cursor
+access.close()

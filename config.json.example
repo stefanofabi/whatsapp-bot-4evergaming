@@ -1,0 +1,6 @@
+{
+    "host": "localhost",
+    "user": "whatsapp_messages",
+    "password": "",
+    "database": "whatsapp_messages"
+}

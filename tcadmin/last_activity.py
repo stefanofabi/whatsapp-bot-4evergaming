@@ -1,24 +1,26 @@
 import config
-import requests
-import template_message
-import json
 import time
+import template_message
 
+# Prepare the cursor to access the main database
 access = config.db.cursor()
+
+# Query to fetch users with a phone number
 sql = """
-SELECT user_id, user_name, date_format(date_sub(last_login, INTERVAL 180 MINUTE), 
+SELECT user_id, user_name, DATE_FORMAT(DATE_SUB(last_login, INTERVAL 180 MINUTE), 
 '%d %M %Y %k:%i') AS last_login, last_login_ip, first_name, last_name, country, home_phone 
 FROM tc_users 
-WHERE home_phone <> '' 
+WHERE home_phone <> ''
 """
 access.execute(sql)
 resultUsers = access.fetchall()
+
 for user in resultUsers:
-    # tcadmin guarda los datetime en utc
+    # tcadmin stores datetime in UTC
     sql = """
     SELECT * 
     FROM tc_tasks 
-    WHERE last_run_time >= date_add(now(), INTERVAL 115 MINUTE) AND 
+    WHERE last_run_time >= DATE_ADD(NOW(), INTERVAL 115 MINUTE) AND 
     status = 3 AND 
     user_id = %s 
     """
@@ -52,19 +54,21 @@ for user in resultUsers:
         else:
             tasks += "\n + " + task[3]
 
-    # no hay nada para enviar al usuario
+    # No tasks to send to the user
     if (tasks == ""):
         continue
 
-    messageToSend = template_message.last_activity.format(firstName = firstName,lastName = lastName, phone = phone, tasks = tasks)
-    url = config.api_endpoint + '/api/send'
-    data = {'phone': phone, 'message': messageToSend, 'token': config.api_token}
-    sendMessage = requests.post(url, json = data).json()
-    
-    if (sendMessage["error"]):
-        print("Error al enviar el mensaje al usuario #" + str(user[0]))
-    else:
-        print("Mensaje enviado al usuario #" + str(user[0])) 
-    
-    # demoramos 1 segundo el proximo mensaje
+    messageToSend = template_message.last_activity.format(firstName=firstName, lastName=lastName, phone=phone, tasks=tasks)
+
+    # Insert the message into the database
+    insert_sql = "INSERT INTO messages (phone, message) VALUES (%s, %s)"
+    access.execute(insert_sql, (phone, messageToSend))
+    config.db.commit()  # Commit the transaction
+
+    print("Message saved in the database for user #" + str(user[0]))
+
+    # Wait 1 second before processing the next user
     time.sleep(1)
+
+# Close the cursor
+access.close()

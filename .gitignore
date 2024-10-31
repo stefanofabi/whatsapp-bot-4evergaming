@@ -3,3 +3,5 @@ node_modules
 /.wwebjs_cache
 /whmcs/__pycache__
 /tcadmin/__pycache__
+config.json
+myenv

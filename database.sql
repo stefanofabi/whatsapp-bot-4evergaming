@@ -1,0 +1,5 @@
+CREATE TABLE messages (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    phone VARCHAR(15) NOT NULL,
+    message TEXT NOT NULL
+);

@@ -1,14 +1,16 @@
 import config
 import datetime
-import requests
-import template_message
-import json
 import time
+import template_message
 
+# Get the current year
 currentDate = datetime.datetime.now()
 currentDate = currentDate.year
 
+# Prepare the cursor to access the main database
 access = config.db.cursor()
+
+# Query to fetch pending orders with unpaid invoices from yesterday
 sql = """
 SELECT tblorders.* 
 FROM tblorders 
@@ -19,7 +21,13 @@ DATE_FORMAT(tblorders.date, '%Y-%m-%d') = DATE_FORMAT(date_sub(now(), INTERVAL 1
 """
 access.execute(sql)
 resultOrders = access.fetchall()
+
+# Prepare the cursor for WhatsApp database
+whatsapp_access = config.db_whatsapp.cursor()
+
+# Process each pending order
 for order in resultOrders:
+    # Query to fetch clients related to the order
     sql = """
     SELECT id, firstname, lastname, phonenumber 
     FROM tblclients 
@@ -28,20 +36,25 @@ for order in resultOrders:
     access.execute(sql, (order[2],))
     resultClients = access.fetchall()
 
+    # Prepare the message for each client
     for client in resultClients:
         clientId = client[0]
         firstName = client[1].split(" ")[0]
         phone = client[3].replace('.', '9').replace('-', '').replace(' ', '')
 
-        messageToSend = template_message.order_pending.format(firstName = firstName)
-        url = config.api_endpoint + '/api/send'
-        data = {'phone': phone, 'message': messageToSend, 'token': config.api_token}
-        sendMessage = requests.post(url, json = data).json()
+        # Prepare the message to send
+        messageToSend = template_message.order_pending.format(firstName=firstName)
 
-        if (sendMessage["error"]):
-            print("Error al enviar el mensaje al usuario #" + str(clientId))
-        else:
-            print("Mensaje enviado al usuario #" + str(clientId)) 
+        # Insert the message into the `messages` table in the WhatsApp database
+        insert_sql = "INSERT INTO messages (phone, message) VALUES (%s, %s)"
+        whatsapp_access.execute(insert_sql, (phone, messageToSend))
+        config.db_whatsapp.commit()  # Commit the transaction
 
-        # demoramos 1 segundo el proximo mensaje
+        print("Message saved in the WhatsApp database for user #" + str(clientId))
+
+        # Wait 1 second before processing the next client
         time.sleep(1)
+
+# Close the cursors
+access.close()
+whatsapp_access.close()

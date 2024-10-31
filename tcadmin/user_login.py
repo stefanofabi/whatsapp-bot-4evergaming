@@ -1,22 +1,28 @@
 import config
 import datetime
-import requests
-import template_message
-import json
 import time
+import template_message
 
+# Get the current year
 currentDate = datetime.datetime.now()
 currentDate = currentDate.year
 
+# Prepare the cursor to access the main database
 access = config.db.cursor()
-# tcadmin guarda los datetime en utc
+
+# Query to fetch user login details
 sql = """
-SELECT user_id, user_name, date_format(date_sub(last_login, INTERVAL 180 MINUTE), '%d %M %Y %k:%iHs.') AS last_login, last_login_ip, first_name, last_name, country, home_phone 
+SELECT user_id, user_name, DATE_FORMAT(DATE_SUB(last_login, INTERVAL 180 MINUTE), '%d %M %Y %k:%iHs.') AS last_login, 
+       last_login_ip, first_name, last_name, country, home_phone 
 FROM tc_users 
-WHERE home_phone <> '' AND last_login >= date_add(now(), INTERVAL 175 minute)
+WHERE home_phone <> '' AND last_login >= DATE_ADD(NOW(), INTERVAL 175 MINUTE)
 """
 access.execute(sql)
 clients = access.fetchall()
+
+# Prepare the cursor for WhatsApp database
+whatsapp_access = config.db_whatsapp.cursor()
+
 for x in clients:   
     username = x[1]
     firstName = x[4].split(" ")[0]
@@ -36,18 +42,22 @@ for x in clients:
     else:
         continue
     
-    lastlogin = x[2]
+    lastLogin = x[2]
     ip = x[3]
 
-    messageToSend = template_message.user_login.format(firstName = firstName,lastName = lastName,phone = phone, lastlogin = lastlogin, ip = ip, username = username)
-    url = config.api_endpoint + '/api/send'
-    data = {'phone': phone, 'message': messageToSend, 'token': config.api_token}
-    sendMessage = requests.post(url, json = data).json()
+    # Prepare the message to send
+    messageToSend = template_message.user_login.format(firstName=firstName, lastName=lastName, phone=phone, lastlogin=lastLogin, ip=ip, username=username)
 
-    if (sendMessage["error"]):
-        print("Error al enviar el mensaje al usuario #" + str(x[0]))
-    else:
-        print("Mensaje enviado al usuario #" + str(x[0])) 
+    # Insert the message into the WhatsApp database
+    insert_sql = "INSERT INTO messages (phone, message) VALUES (%s, %s)"
+    whatsapp_access.execute(insert_sql, (phone, messageToSend))
+    config.db_whatsapp.commit()  # Commit the transaction
 
-    # demoramos 1 segundo el proximo mensaje
+    print("Message saved in the WhatsApp database for user #" + str(x[0])) 
+
+    # Wait 1 second before processing the next message
     time.sleep(1)
+
+# Close the cursors
+access.close()
+whatsapp_access.close()
