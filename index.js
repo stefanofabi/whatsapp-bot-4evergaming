@@ -84,4 +84,11 @@ client.on("disconnected", (reason) => {
     process.exit(1);
 });
 
+// Event to respond to incoming messages
+client.on('message', message => {
+    if (message.body === '!status') {
+        message.reply('🤖 Estoy online');
+    }
+});
+
 client.initialize();
