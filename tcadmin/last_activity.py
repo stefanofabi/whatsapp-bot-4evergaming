@@ -15,6 +15,9 @@ WHERE home_phone <> ''
 access.execute(sql)
 resultUsers = access.fetchall()
 
+# Prepare the cursor for WhatsApp database
+whatsapp_access = config.db_whatsapp.cursor()
+
 for user in resultUsers:
     # tcadmin stores datetime in UTC
     sql = """
@@ -62,8 +65,8 @@ for user in resultUsers:
 
     # Insert the message into the database
     insert_sql = "INSERT INTO messages (phone, message) VALUES (%s, %s)"
-    access.execute(insert_sql, (phone, messageToSend))
-    config.db.commit()  # Commit the transaction
+    whatsapp_access.execute(insert_sql, (phone, messageToSend))
+    config.db_whatsapp.commit()  # Commit the transaction
 
     print("Message saved in the database for user #" + str(user[0]))
 

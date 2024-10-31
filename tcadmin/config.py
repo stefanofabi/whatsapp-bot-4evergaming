@@ -18,7 +18,9 @@ try:
         host=host_db,
         user=user_db,
         password=pass_db,
-        database=name_db
+        database=name_db,
+        charset='utf8mb4',
+        collation='utf8mb4_general_ci'
     )
     print("Connected to the primary database successfully.")
 except mysql.connector.Error as err:

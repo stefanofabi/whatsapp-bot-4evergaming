@@ -24,6 +24,9 @@ WHERE tc_game_service_live_stats.start_time >= DATE_ADD(NOW(), INTERVAL 175 MINU
 access.execute(sql)
 clients = access.fetchall()
 
+# Prepare the cursor for WhatsApp database
+whatsapp_access = config.db_whatsapp.cursor()
+
 for client in clients:   
     firstName = client[1].split(" ")[0]
     phone = client[4].replace('.', '9').replace('-', '').replace(' ', '')
@@ -52,8 +55,8 @@ for client in clients:
     
     # Insert the message into the database
     insert_sql = "INSERT INTO messages (phone, message) VALUES (%s, %s)"
-    access.execute(insert_sql, (phone, messageToSend))
-    config.db.commit()  # Commit the transaction
+    whatsapp_access.execute(insert_sql, (phone, messageToSend))
+    config.db_whatsapp.commit()  # Commit the transaction
 
     print("Message saved in the database for user #" + str(client[0])) 
 
