@@ -62,6 +62,12 @@ client.on('message_create', message => {
 
     if (commandParts[0] === '!factura' && commandParts.length === 2) {
         const invoiceId = parseInt(commandParts[1], 10);
+
+        if (isNaN(invoiceId)) {
+            message.reply('🤖 Numero de factura invalido');
+            return;
+        }
+        
         fetchInvoiceDetails(invoiceId, userPhone, client);
     }
 
@@ -72,7 +78,7 @@ client.on('message_create', message => {
     if (commandParts[0] === '!vencimiento' || commandParts[0] === '!vencimientos' || commandParts[0] === '!proximosvencimientos') {
         let days = parseInt(commandParts[1], 10);
 
-        if (commandParts.length !== 2) {
+        if (commandParts.length !== 2 || isNaN(days)) {
             days = 10;
         }
 
