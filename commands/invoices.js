@@ -1,7 +1,7 @@
 const mysql = require('mysql2');
 const config = require('../config.json');
 
-// Configura la conexión a la base de datos de WHMCS
+// Configure the connection to the WHMCS database
 const db_whmcs = mysql.createConnection({
     host: config.databases.whmcs.host,
     user: config.databases.whmcs.user,
@@ -9,7 +9,7 @@ const db_whmcs = mysql.createConnection({
     database: config.databases.whmcs.database
 });
 
-// Conecta a la base de datos de WHMCS
+// Connect to the WHMCS database
 db_whmcs.connect((err) => {
     if (err) {
         console.error('Error connecting to WHMCS database:', err);
@@ -58,10 +58,10 @@ function fetchPendingInvoices(userPhone, client) {
 
         client.sendMessage(userPhone + "@c.us", invoicesMessage)
             .then(response => {
-                console.log(`[200] Mensaje enviado a ${userPhone}`);
+                console.log(`[200] Message sent to  ${userPhone}`);
             })
             .catch(error => {
-                console.error(`[500] Error al enviar mensaje a ${userPhone}:`, error);
+                console.error(`[500] Error sending message to ${userPhone}:`, error);
             });
     });
 }
@@ -115,10 +115,10 @@ function fetchInvoiceDetails(invoiceId, userPhone, client) {
 
         client.sendMessage(userPhone + "@c.us", invoiceDetailsMessage)
             .then(response => {
-                console.log(`[200] Mensaje enviado a ${userPhone}`);
+                console.log(`[200] Message sent to  ${userPhone}`);
             })
             .catch(error => {
-                console.error(`[500] Error al enviar mensaje a ${userPhone}:`, error);
+                console.error(`[500] Error sending message to ${userPhone}:`, error);
             });
     });
 }

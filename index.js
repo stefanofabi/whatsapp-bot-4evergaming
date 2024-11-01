@@ -4,6 +4,7 @@ const cron = require('node-cron');
 
 // Commands
 const { fetchPendingInvoices, fetchInvoiceDetails } = require('./commands/invoices');
+const { fetchActiveServers } = require('./commands/services');
 const fetchAndSendMessages = require('./crons/message_sender');
 
 // Configure the WhatsApp client
@@ -50,6 +51,10 @@ client.on('message', message => {
     if (commandParts[0] === '!factura' && commandParts.length === 2) {
         const invoiceId = parseInt(commandParts[1], 10);
         fetchInvoiceDetails(invoiceId, userPhone, client);
+    }
+
+    if (commandParts[0] === '!misservicios' || commandParts[0] === '!servicios'|| commandParts[0] === '!misservidores'|| commandParts[0] === '!servidores') {
+        fetchActiveServers(userPhone, client);
     }
 });
 
