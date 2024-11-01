@@ -3,7 +3,7 @@ const qrcode = require('qrcode-terminal');
 const cron = require('node-cron');
 
 // Commands
-const { fetchPendingInvoices } = require('./commands/invoices');
+const { fetchPendingInvoices, fetchInvoiceDetails } = require('./commands/invoices');
 const fetchAndSendMessages = require('./crons/message_sender');
 
 // Configure the WhatsApp client
@@ -37,13 +37,19 @@ client.on("disconnected", (reason) => {
 // Event to respond to incoming messages
 client.on('message', message => {
     const userPhone = message.from.split('@')[0];
+    const commandParts = message.body.split(' ');
 
-    if (message.body === '!status') {
-        message.reply('🤖 I am online');
+    if (commandParts[0] === '!status' || commandParts[0] === '!estado') {
+        message.reply('🤖 Estoy en linea');
     }
 
-    if (message.body === '!misfacturas') {
+    if (commandParts[0] === '!misfacturas' || commandParts[0] === '!facturas') {
         fetchPendingInvoices(userPhone, client);
+    }
+
+    if (commandParts[0] === '!factura' && commandParts.length === 2) {
+        const invoiceId = parseInt(commandParts[1], 10);
+        fetchInvoiceDetails(invoiceId, userPhone, client);
     }
 });
 

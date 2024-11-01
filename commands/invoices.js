@@ -34,7 +34,7 @@ function fetchPendingInvoices(userPhone, client) {
             tblinvoices.userid = tblclients.id 
         WHERE 
             tblinvoices.status = ? AND
-            REPLACE(REPLACE(REPLACE(REPLACE(tblclients.phonenumber, '+', ''), '.', ''), ' ', ''), '-', '') = ?
+            REPLACE(REPLACE(REPLACE(REPLACE(tblclients.phonenumber, '+', ''), '.', '9'), ' ', ''), '-', '') = ?
     `;
 
     db_whmcs.query(query, ["Unpaid", userPhone], (err, results) => {
@@ -44,11 +44,11 @@ function fetchPendingInvoices(userPhone, client) {
         }
 
         if (results.length === 0) {
-            client.sendMessage(userPhone + "@c.us", 'No tienes facturas pendientes.');
+            client.sendMessage(userPhone + "@c.us", '🤖 No hay facturas pendientes');
             return;
         }
 
-        let invoicesMessage = 'Aquí están tus facturas pendientes:\n\n';
+        let invoicesMessage = '🤖 Acá están tus facturas pendientes:\n\n';
         results.forEach(({ id, date, duedate, total, paymentmethod }) => {
             const formattedDate = new Date(date).toLocaleDateString('es-AR', { day: 'numeric', month: 'long', year: 'numeric' });
             const formattedDueDate = new Date(duedate).toLocaleDateString('es-AR', { day: 'numeric', month: 'long', year: 'numeric' });
@@ -66,4 +66,62 @@ function fetchPendingInvoices(userPhone, client) {
     });
 }
 
-module.exports = { fetchPendingInvoices };
+
+function fetchInvoiceDetails(invoiceId, userPhone, client) {
+    const query = `
+        SELECT 
+            tblinvoices.id, 
+            tblinvoices.date, 
+            tblinvoices.duedate, 
+            tblinvoices.total, 
+            tblinvoices.status,
+            tblinvoices.paymentmethod, 
+            tblclients.firstname, 
+            tblclients.lastname 
+        FROM 
+            tblinvoices 
+        INNER JOIN 
+            tblclients 
+        ON 
+            tblinvoices.userid = tblclients.id 
+        WHERE 
+            tblinvoices.id = ? AND
+            REPLACE(REPLACE(REPLACE(REPLACE(tblclients.phonenumber, '+', ''), '.', '9'), ' ', ''), '-', '') = ?
+    `;
+
+    db_whmcs.query(query, [invoiceId, userPhone], (err, results) => {
+        if (err) {
+            console.error('Error fetching invoice details:', err);
+            return;
+        }
+
+        if (results.length === 0) {
+            client.sendMessage(userPhone + "@c.us", `🤖 No se encontró la factura #${invoiceId}`);
+            return;
+        }
+
+        const { id, date, duedate, total, status, paymentmethod, firstname, lastname } = results[0];
+        const formattedDate = new Date(date).toLocaleDateString('es-AR', { day: 'numeric', month: 'long', year: 'numeric' });
+        const formattedDueDate = new Date(duedate).toLocaleDateString('es-AR', { day: 'numeric', month: 'long', year: 'numeric' });
+
+        const invoiceDetailsMessage = `🤖 Los datos de tu factura #${id}:\n
+            *Cliente:* ${firstname} ${lastname}\n
+            *Fecha:* ${formattedDate}\n
+            *Vencimiento:* ${formattedDueDate}\n
+            *Estado:* ${status}\n
+            *Total:* \$${total}\n
+            *Método de pago:* ${paymentmethod}
+        `;
+
+        client.sendMessage(userPhone + "@c.us", invoiceDetailsMessage)
+            .then(response => {
+                console.log(`[200] Mensaje enviado a ${userPhone}`);
+            })
+            .catch(error => {
+                console.error(`[500] Error al enviar mensaje a ${userPhone}:`, error);
+            });
+    });
+}
+
+
+module.exports = { fetchPendingInvoices, fetchInvoiceDetails };
