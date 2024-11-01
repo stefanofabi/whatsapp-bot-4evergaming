@@ -5,6 +5,9 @@ const cron = require('node-cron');
 // Commands
 const { fetchPendingInvoices, fetchInvoiceDetails } = require('./commands/invoices');
 const { fetchActiveServers, fetchUpcomingDueDates } = require('./commands/services');
+const { getHelpCommands } = require('./commands/help');
+
+// Crons
 const fetchAndSendMessages = require('./crons/message_sender');
 
 // Configure the WhatsApp client
@@ -43,6 +46,10 @@ client.on('message_create', message => {
     // If I send the message, the message will still be directed to the client.
     if (message.fromMe) {
         userPhone = message.to.split('@')[0];
+    }
+
+    if (commandParts[0] === '!ayuda' || commandParts[0] === '!help') {
+        getHelpCommands(userPhone, client);
     }
 
     if (commandParts[0] === '!status' || commandParts[0] === '!estado') {
