@@ -18,7 +18,7 @@ source myenv/bin/activate
 # Install python dependencies
 pip install -r requirements.txt
 
-# Configure the MySQL WhatsApp database
+# Configure the MySQL databases
 cp config.json.example config.json
 nano config.json
 
@@ -27,22 +27,6 @@ mysql -u whatsapp_messages -p whatsapp_messages < /root/whatsapp-bot-4evergaming
 
 # Install npm dependencies
 npm install
-
-# Configure the MySQL tcadmin and whmcs database
-export DB_WHMCS_HOST='localhost'
-export DB_WHMCS_NAME='whmcs'
-export DB_WHMCS_USER='whmcs'
-export DB_WHMCS_PASS=''
-
-export DB_TCADMIN_HOST='localhost'
-export DB_TCADMIN_NAME='tcadmin'
-export DB_TCADMIN_USER='tcadmin'
-export DB_TCADMIN_PASS=''
-
-export DB_WHATSAPP_HOST='localhost'
-export DB_WHATSAPP_NAME='whatsapp_messages'
-export DB_WHATSAPP_USER='whatsapp_messages'
-export DB_WHATSAPP_PASS=''
 
 # Run the whatsapp bot
 npm start

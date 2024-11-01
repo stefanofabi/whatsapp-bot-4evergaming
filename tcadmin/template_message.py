@@ -6,7 +6,7 @@
 # Nombre de usuario: {username}
 
 user_login = """
-🤖 Nuevo inicio de sesión en el panel TCAdmin 🚨\n\n
+🤖 Nuevo inicio de sesión en el panel TCAdmin \n\n
 
 *Usuario:* {username} \n
 *Fecha:* {lastlogin}\n

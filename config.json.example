@@ -1,6 +1,22 @@
 {
-    "host": "localhost",
-    "user": "whatsapp_messages",
-    "password": "",
-    "database": "whatsapp_messages"
+    "databases": {
+        "whmcs": {
+            "host": "",
+            "user": "",
+            "password": "",
+            "database": ""
+        },
+        "tcadmin": {
+            "host": "",
+            "user": "",
+            "password": "",
+            "database": ""
+        },
+        "whatsapp": {
+            "host": "",
+            "user": "",
+            "password": "",
+            "database": ""
+        }
+    }
 }
