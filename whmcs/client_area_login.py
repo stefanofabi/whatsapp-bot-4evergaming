@@ -17,6 +17,7 @@ INNER JOIN tblusers_clients ON tblusers.id = tblusers_clients.auth_user_id
 INNER JOIN tblclients ON tblusers_clients.client_id = tblclients.id 
 WHERE tblusers_clients.last_login >= date_sub(now(), INTERVAL 5 minute) 
 and email_preferences like '%general%:%1%'
+and tblclients.phonenumber <> '' 
 """
 
 # Execute the query to fetch users

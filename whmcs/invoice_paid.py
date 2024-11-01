@@ -31,6 +31,7 @@ for invoice in resultInvoices:
     SELECT id, firstname, lastname, phonenumber, currency 
     FROM tblclients 
     WHERE id = %s and email_preferences like '%invoice%:%1%'
+    AND phonenumber <> '' 
     """
     access.execute(sql, (invoice[1],))
     resultClients = access.fetchall()

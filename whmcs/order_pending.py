@@ -32,6 +32,7 @@ for order in resultOrders:
     SELECT id, firstname, lastname, phonenumber 
     FROM tblclients 
     WHERE id = %s and email_preferences like '%product%:%1%'
+    AND phonenumber <> '' 
     """
     access.execute(sql, (order[2],))
     resultClients = access.fetchall()

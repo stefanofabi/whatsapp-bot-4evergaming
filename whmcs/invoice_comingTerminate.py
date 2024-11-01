@@ -41,6 +41,7 @@ for invoice in resultInvoices:
     WHERE id = %s 
     AND email_preferences LIKE '%invoice%:%1%' 
     AND groupid <> %s
+    AND phonenumber <> '' 
     """, (invoice[1], config.GRUPO_DEBITO_AUTOMATICO))
     
     resultClients = access.fetchall()

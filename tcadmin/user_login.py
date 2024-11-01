@@ -15,7 +15,8 @@ sql = """
 SELECT user_id, user_name, DATE_FORMAT(DATE_SUB(last_login, INTERVAL 180 MINUTE), '%d %M %Y %k:%iHs.') AS last_login, 
        last_login_ip, first_name, last_name, country, home_phone 
 FROM tc_users 
-WHERE home_phone <> '' AND last_login >= DATE_ADD(NOW(), INTERVAL 175 MINUTE)
+WHERE last_login >= DATE_ADD(NOW(), INTERVAL 175 MINUTE)
+AND home_phone <> '' 
 """
 access.execute(sql)
 clients = access.fetchall()

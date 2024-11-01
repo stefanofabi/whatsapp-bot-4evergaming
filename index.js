@@ -35,10 +35,15 @@ client.on("disconnected", (reason) => {
     process.exit(1);
 });
 
-// Event to respond to incoming messages
-client.on('message', message => {
-    const userPhone = message.from.split('@')[0];
+// Fired on all message creations, including your own
+client.on('message_create', message => {
+    let userPhone = message.from.split('@')[0];
     const commandParts = message.body.split(' ');
+    
+    // If I send the message, the message will still be directed to the client.
+    if (message.fromMe) {
+        userPhone = message.to.split('@')[0];
+    }
 
     if (commandParts[0] === '!status' || commandParts[0] === '!estado') {
         message.reply('🤖 Estoy en linea');

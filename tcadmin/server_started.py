@@ -19,7 +19,8 @@ FROM tc_game_service_live_stats
 INNER JOIN tc_services ON tc_services.service_id = tc_game_service_live_stats.service_id 
 INNER JOIN tc_game_services ON tc_game_services.service_id = tc_services.service_id 
 INNER JOIN tc_users ON tc_users.user_id = tc_services.user_id 
-WHERE tc_game_service_live_stats.start_time >= DATE_ADD(NOW(), INTERVAL 175 MINUTE) AND tc_users.home_phone <> ''
+WHERE tc_game_service_live_stats.start_time >= DATE_ADD(NOW(), INTERVAL 175 MINUTE) 
+AND tc_users.home_phone <> ''
 """
 access.execute(sql)
 clients = access.fetchall()
