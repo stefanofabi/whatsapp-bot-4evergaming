@@ -6,7 +6,7 @@ const cron = require('node-cron');
 const { fetchPendingInvoices, fetchInvoiceDetails } = require('./commands/invoices');
 const { fetchActiveServers, fetchUpcomingDueDates } = require('./commands/services');
 const { getHelpCommands } = require('./commands/help');
-const { payWithBankTransfer, payWithMercadoPago} = require('./commands/payment_gateways');
+const { payWithBankTransfer, payWithCard, payWithMercadoPago, payWithUala} = require('./commands/payment_gateways');
 
 // Crons
 const fetchAndSendMessages = require('./crons/message_sender');
@@ -107,8 +107,21 @@ client.on('message_create', async (message) => {
             return;
         }
 
+        await payWithCard(invoiceId, userPhone, client);
+    }
+
+    if (commandParts[0] === '!mercadopago') {
+        const invoiceId = parseInt(commandParts[1], 10);
+
         await payWithMercadoPago(invoiceId, userPhone, client);
     }
+
+    if (commandParts[0] === '!uala') {
+        const invoiceId = parseInt(commandParts[1], 10);
+
+        await payWithUala(invoiceId, userPhone, client);
+    }
+
 });
 
 client.initialize();
