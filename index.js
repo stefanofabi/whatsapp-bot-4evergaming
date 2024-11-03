@@ -3,7 +3,7 @@ const qrcode = require('qrcode-terminal');
 const cron = require('node-cron');
 
 // Commands
-const { fetchPendingInvoices, fetchInvoiceDetails } = require('./commands/invoices');
+const { fetchPendingInvoices, fetchInvoiceDetails, payWithBankTransfer } = require('./commands/invoices');
 const { fetchActiveServers, fetchUpcomingDueDates } = require('./commands/services');
 const { getHelpCommands } = require('./commands/help');
 
@@ -24,22 +24,29 @@ client.on('qr', (qr) => {
     qrcode.generate(qr, {small: true});
 });
 
+var isReady = false;
 // Event when WhatsApp client is ready
 client.on('ready', () => {
+    isReady = true;
+
     console.log('WhatsApp is ready!');
 });
 
 // Schedule the message sending task every 5 minutes
-cron.schedule('*/5 * * * *', () => fetchAndSendMessages(client));
+cron.schedule('*/5 * * * *', async () => await fetchAndSendMessages(client));
 
 // Event when WhatsApp client disconnects
 client.on("disconnected", (reason) => {
+    isReady = false;
+
     console.error("WhatsApp Bot disconnected:", reason);
     process.exit(1);
 });
 
 // Fired on all message creations, including your own
-client.on('message_create', message => {
+client.on('message_create', async (message) => {
+    if (! isReady) return;
+    
     let userPhone = message.from.split('@')[0];
     const commandParts = message.body.split(' ');
     
@@ -49,30 +56,30 @@ client.on('message_create', message => {
     }
 
     if (commandParts[0] === '!ayuda' || commandParts[0] === '!help') {
-        getHelpCommands(userPhone, client);
+        await getHelpCommands(userPhone, client);
     }
 
     if (commandParts[0] === '!status' || commandParts[0] === '!estado') {
-        message.reply('🤖 Estoy en linea');
+        await message.reply('🤖 Estoy en linea');
     }
 
     if (commandParts[0] === '!misfacturas' || commandParts[0] === '!facturas') {
-        fetchPendingInvoices(userPhone, client);
+        await fetchPendingInvoices(userPhone, client);
     }
 
     if (commandParts[0] === '!factura' && commandParts.length === 2) {
         const invoiceId = parseInt(commandParts[1], 10);
 
         if (isNaN(invoiceId)) {
-            message.reply('🤖 Numero de factura invalido');
+            await message.reply('🤖 Numero de factura invalido');
             return;
         }
         
-        fetchInvoiceDetails(invoiceId, userPhone, client);
+        await fetchInvoiceDetails(invoiceId, userPhone, client);
     }
 
     if (commandParts[0] === '!misservicios' || commandParts[0] === '!servicios'|| commandParts[0] === '!misservidores'|| commandParts[0] === '!servidores') {
-        fetchActiveServers(userPhone, client);
+        await fetchActiveServers(userPhone, client);
     }
 
     if (commandParts[0] === '!vencimiento' || commandParts[0] === '!vencimientos' || commandParts[0] === '!proximosvencimientos') {
@@ -82,7 +89,13 @@ client.on('message_create', message => {
             days = 10;
         }
 
-        fetchUpcomingDueDates(days, userPhone, client);
+        await fetchUpcomingDueDates(days, userPhone, client);
+    }
+
+    if (commandParts[0] === '!transferencia' || commandParts[0] === '!cbu' || commandParts[0] === '!alias') {
+        const invoiceId = parseInt(commandParts[1], 10);
+
+        await payWithBankTransfer(invoiceId, userPhone, client);
     }
 });
 

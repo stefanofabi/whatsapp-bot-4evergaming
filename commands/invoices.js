@@ -1,24 +1,8 @@
-const mysql = require('mysql2');
-const config = require('../config.json');
+const { connect } = require('../databases/connection');
 
-// Configure the connection to the WHMCS database
-const db_whmcs = mysql.createConnection({
-    host: config.databases.whmcs.host,
-    user: config.databases.whmcs.user,
-    password: config.databases.whmcs.password,
-    database: config.databases.whmcs.database
-});
+async function fetchPendingInvoices(userPhone, client) {
+    const db = await connect('whmcs');
 
-// Connect to the WHMCS database
-db_whmcs.connect((err) => {
-    if (err) {
-        console.error('Error connecting to WHMCS database:', err);
-        process.exit(1);
-    }
-    console.log('Connected to WHMCS database');
-});
-
-function fetchPendingInvoices(userPhone, client) {
     const query = `
         SELECT 
             tblinvoices.id, 
@@ -37,14 +21,13 @@ function fetchPendingInvoices(userPhone, client) {
             REPLACE(REPLACE(REPLACE(REPLACE(tblclients.phonenumber, '+', ''), '.', '9'), ' ', ''), '-', '') = ?
     `;
 
-    db_whmcs.query(query, ["Unpaid", userPhone], (err, results) => {
-        if (err) {
-            console.error('Error fetching invoices:', err);
-            return;
-        }
+    try {
+        const [results] = await db.execute(query, ["Unpaid", userPhone]);
 
         if (results.length === 0) {
-            client.sendMessage(userPhone + "@c.us", '🤖 No hay facturas pendientes');
+            await client.sendMessage(userPhone + "@c.us", '🤖 No hay facturas pendientes');
+            await db.end();
+
             return;
         }
 
@@ -56,18 +39,18 @@ function fetchPendingInvoices(userPhone, client) {
             invoicesMessage += `Factura: #${id}\nFecha: ${formattedDate}\nVencimiento: ${formattedDueDate}\nTotal: \$${total}\n\n`;
         });
 
-        client.sendMessage(userPhone + "@c.us", invoicesMessage)
-            .then(response => {
-                console.log(`[200] Message sent to  ${userPhone}`);
-            })
-            .catch(error => {
-                console.error(`[500] Error sending message to ${userPhone}:`, error);
-            });
-    });
+        await client.sendMessage(userPhone + "@c.us", invoicesMessage);
+        console.log(`[200] Message sent to  ${userPhone}`);
+    } catch (err) {
+        console.error('Error fetching invoices:', err);
+    } finally {
+        await db.end();
+    }
 }
 
-
-function fetchInvoiceDetails(invoiceId, userPhone, client) {
+async function fetchInvoiceDetails(invoiceId, userPhone, client) {
+    const db = await connect('whmcs');
+    
     const query = `
         SELECT 
             tblinvoices.id, 
@@ -89,14 +72,13 @@ function fetchInvoiceDetails(invoiceId, userPhone, client) {
             REPLACE(REPLACE(REPLACE(REPLACE(tblclients.phonenumber, '+', ''), '.', '9'), ' ', ''), '-', '') = ?
     `;
 
-    db_whmcs.query(query, [invoiceId, userPhone], (err, results) => {
-        if (err) {
-            console.error('Error fetching invoice details:', err);
-            return;
-        }
+    try {
+        const [results] = await db.execute(query, [invoiceId, userPhone]);
 
         if (results.length === 0) {
-            client.sendMessage(userPhone + "@c.us", `🤖 No se encontró la factura #${invoiceId}`);
+            await client.sendMessage(userPhone + "@c.us", `🤖 No se encontró la factura #${invoiceId}`);
+            await db.end();
+            
             return;
         }
 
@@ -113,15 +95,105 @@ function fetchInvoiceDetails(invoiceId, userPhone, client) {
             *Método de pago:* ${paymentmethod}
         `;
 
-        client.sendMessage(userPhone + "@c.us", invoiceDetailsMessage)
-            .then(response => {
-                console.log(`[200] Message sent to  ${userPhone}`);
-            })
-            .catch(error => {
-                console.error(`[500] Error sending message to ${userPhone}:`, error);
-            });
-    });
+        await client.sendMessage(userPhone + "@c.us", invoiceDetailsMessage);
+        console.log(`[200] Message sent to  ${userPhone}`);
+    } catch (err) {
+        console.error('Error fetching invoice details:', err);
+    } finally {
+        await db.end();
+    }
 }
 
+// Returns the total to be paid by bank transfer of all pending invoices. Otherwise, it returns an error.
+async function payWithBankTransfer(invoiceId, userPhone, client) {
+    const db = await connect('whmcs');
 
-module.exports = { fetchPendingInvoices, fetchInvoiceDetails };
+    // Modifica la consulta según si se proporciona invoiceId
+    const query = `
+        SELECT 
+            tblinvoices.id, 
+            tblinvoices.date, 
+            tblinvoices.duedate, 
+            tblinvoices.total, 
+            tblinvoices.status, 
+            tblinvoices.paymentmethod 
+        FROM 
+            tblinvoices 
+        INNER JOIN 
+            tblclients 
+        ON 
+            tblinvoices.userid = tblclients.id 
+        WHERE 
+            (tblinvoices.id = ? OR ? IS NULL) AND
+            REPLACE(REPLACE(REPLACE(REPLACE(tblclients.phonenumber, '+', ''), '.', '9'), ' ', ''), '-', '') = ?
+    `;
+
+    try {
+        const [results] = await db.execute(query, [invoiceId, invoiceId, userPhone]);
+
+        if (results.length === 0) {
+            if (isNaN(invoiceId))
+            {
+                await client.sendMessage(userPhone + "@c.us", '🤖 No hay facturas pendientes por pagar');
+            } else {
+                await client.sendMessage(userPhone + "@c.us", '🤖 No existe la factura');
+            }
+
+            await db.end();
+            return;
+        }
+
+        let totalSum = 0;
+        let invoicesMessage = "";
+
+        if (results.length === 1 && !isNaN(invoiceId)) {
+            let { id, date, duedate, total, status } = results[0];
+
+            if (status === 'Unpaid') {
+                total = Math.ceil(total);
+                totalSum += total; 
+                const formattedDate = new Date(date).toLocaleDateString('es-AR', { day: 'numeric', month: 'long', year: 'numeric' });
+                const formattedDueDate = new Date(duedate).toLocaleDateString('es-AR', { day: 'numeric', month: 'long', year: 'numeric' });
+
+                invoicesMessage += '🤖 Acá está tu factura pendiente:\n\n';
+                invoicesMessage += `*Factura: #${id}*\nFecha: ${formattedDate}\nVencimiento: ${formattedDueDate}\nTotal: \$${total}\n`;
+            } else {
+                await client.sendMessage(userPhone + "@c.us", '🤖 No podés pagar esta factura.\n\n Motivo: Estado de la factura '+status);
+                await db.end();
+                return;
+            }
+        } else {
+            invoicesMessage = '🤖 Acá están tus facturas pendientes:\n\n';
+            results.forEach(({ id, date, duedate, amount, status }) => {
+                if (status !== 'Unpaid') return;
+
+                amount = Math.ceil(amount);
+
+                totalSum += amount; 
+                const formattedDate = new Date(date).toLocaleDateString('es-AR', { day: 'numeric', month: 'long', year: 'numeric' });
+                const formattedDueDate = new Date(duedate).toLocaleDateString('es-AR', { day: 'numeric', month: 'long', year: 'numeric' });
+
+                invoicesMessage += `*Factura: #${id}*\nFecha: ${formattedDate}\nVencimiento: ${formattedDueDate}\nMonto: \$${amount}\n\n`;
+            });     
+        }
+
+        const totalSumDiscount = Math.ceil(totalSum * 0.90); 
+        invoicesMessage += `\n *Total a pagar (10% de descuento):* ~~\$${totalSum}~~ \$${totalSumDiscount}\n\n`;
+
+        invoicesMessage += `Realiza tu pago con los siguientes datos:\n` +
+                          `*Titular:* Stefano Fabi\n` +
+                          `*CUIT:* 20-39881919-6\n` +
+                          `*CVU:* 0000003100090739102124\n` +
+                          `*Alias:* 4evergaming\n\n` +
+                          `Por favor enviar el comprobante de la transferencia 🙏`;
+
+        await client.sendMessage(userPhone + "@c.us", invoicesMessage);
+        console.log(`[200] Message sent to ${userPhone}`);
+    } catch (err) {
+        console.error('Error fetching invoices:', err);
+    } finally {
+        await db.end();
+    }
+}
+
+module.exports = { fetchPendingInvoices, fetchInvoiceDetails, payWithBankTransfer};

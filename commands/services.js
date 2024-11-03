@@ -1,25 +1,9 @@
-const mysql = require('mysql2');
-const config = require('../config.json');
-
-// Configure the connection to the WHMCS database
-const db_whmcs = mysql.createConnection({
-    host: config.databases.whmcs.host,
-    user: config.databases.whmcs.user,
-    password: config.databases.whmcs.password,
-    database: config.databases.whmcs.database
-});
-
-// Connect to the WHMCS database
-db_whmcs.connect((err) => {
-    if (err) {
-        console.error('Error connecting to WHMCS database:', err);
-        process.exit(1);
-    }
-    console.log('Connected to WHMCS database');
-});
+const { connect } = require('../databases/connection');
 
 // Function to fetch active servers
-function fetchActiveServers(userPhone, client) {
+async function fetchActiveServers(userPhone, client) {
+    const db = await connect('whmcs');
+
     const query = `
         SELECT 
             tblproducts.name AS productName, 
@@ -37,14 +21,13 @@ function fetchActiveServers(userPhone, client) {
             REPLACE(REPLACE(REPLACE(REPLACE(tblclients.phonenumber, '+', ''), '.', '9'), ' ', ''), '-', '') = ?
     `;
 
-    db_whmcs.query(query, [userPhone], (err, results) => {
-        if (err) {
-            console.error('Error fetching active servers:', err);
-            return;
-        }
+    try {
+        const [results] = await db.execute(query, [userPhone]);
 
         if (results.length === 0) {
-            client.sendMessage(userPhone + "@c.us", '🤖 No tenes servicios activos');
+            await client.sendMessage(userPhone + "@c.us", '🤖 No tenes servicios activos');
+            await db.end();
+
             return;
         }
 
@@ -53,18 +36,19 @@ function fetchActiveServers(userPhone, client) {
             serversMessage += `*Producto:* ${productName}\n*Dominio:* ${domain}\n*Precio:* \$${amount}\n*Facturación:* ${billingCycle}\n\n`;
         });
 
-        client.sendMessage(userPhone + "@c.us", serversMessage)
-            .then(response => {
-                console.log(`[200] Message sent to ${userPhone}`);
-            })
-            .catch(error => {
-                console.error(`[500] Error sending message to ${userPhone}:`, error);
-            });
-    });
+        await client.sendMessage(userPhone + "@c.us", serversMessage);
+        console.log(`[200] Message sent to ${userPhone}`);
+    } catch (err) {
+        console.error('Error fetching active servers:', err);
+    } finally {
+        await db.end();
+    }
 }
 
 // Function to fetch upcoming due dates
-function fetchUpcomingDueDates(days, userPhone, client) {
+async function fetchUpcomingDueDates(days, userPhone, client) {
+    const db = await connect('whmcs');
+
     const query = `
         SELECT 
             tblproducts.name AS productName, 
@@ -84,14 +68,13 @@ function fetchUpcomingDueDates(days, userPhone, client) {
             REPLACE(REPLACE(REPLACE(REPLACE(tblclients.phonenumber, '+', ''), '.', '9'), ' ', ''), '-', '') = ?
     `;
 
-    db_whmcs.query(query, [days, userPhone], (err, results) => {
-        if (err) {
-            console.error('Error fetching active servers:', err);
-            return;
-        }
+    try {
+        const [results] = await db.execute(query, [days, userPhone]);
 
         if (results.length === 0) {
-            client.sendMessage(userPhone + "@c.us", '🤖 No tenes vencimientos en los próximos ' + days + " días");
+            await client.sendMessage(userPhone + "@c.us", '🤖 No tenes vencimientos en los próximos ' + days + " días");
+            await db.end();
+            
             return;
         }
 
@@ -100,14 +83,13 @@ function fetchUpcomingDueDates(days, userPhone, client) {
             serversMessage += `*Producto:* ${productName}\n*Dominio:* ${domain}\n*Precio:* \$${amount}\n*Facturación:* ${billingCycle}\n*Fecha de Vencimiento:* ${formatDate(nextduedate)}\n\n`;
         });
 
-        client.sendMessage(userPhone + "@c.us", serversMessage)
-            .then(response => {
-                console.log(`[200] Message sent to ${userPhone}`);
-            })
-            .catch(error => {
-                console.error(`[500] Error sending message to ${userPhone}:`, error);
-            });
-    });
+        await client.sendMessage(userPhone + "@c.us", serversMessage);
+        console.log(`[200] Message sent to ${userPhone}`);
+    } catch (err) {
+        console.error('Error fetching upcoming due dates:', err);
+    } finally {
+        await db.end();
+    }
 }
 
 function formatDate(date) {
