@@ -3,9 +3,10 @@ const qrcode = require('qrcode-terminal');
 const cron = require('node-cron');
 
 // Commands
-const { fetchPendingInvoices, fetchInvoiceDetails, payWithBankTransfer } = require('./commands/invoices');
+const { fetchPendingInvoices, fetchInvoiceDetails } = require('./commands/invoices');
 const { fetchActiveServers, fetchUpcomingDueDates } = require('./commands/services');
 const { getHelpCommands } = require('./commands/help');
+const { payWithBankTransfer, payWithMercadoPago} = require('./commands/payment_gateways');
 
 // Crons
 const fetchAndSendMessages = require('./crons/message_sender');
@@ -96,6 +97,17 @@ client.on('message_create', async (message) => {
         const invoiceId = parseInt(commandParts[1], 10);
 
         await payWithBankTransfer(invoiceId, userPhone, client);
+    }
+
+    if (commandParts[0] === '!tarjeta' && commandParts.length === 2) {
+        const invoiceId = parseInt(commandParts[1], 10);
+
+        if (isNaN(invoiceId)) {
+            await message.reply('🤖 Numero de factura invalido');
+            return;
+        }
+
+        await payWithMercadoPago(invoiceId, userPhone, client);
     }
 });
 

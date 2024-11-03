@@ -18,5 +18,16 @@
             "password": "",
             "database": ""
         }
+    },
+    "payment_gateways": {
+        "mercadopago": {
+            "access_token": "",
+            "back_urls": {
+                "success": "",
+                "failure": "",
+                "pending": ""
+            },
+            "notification_url": ""
+        }
     }
 }

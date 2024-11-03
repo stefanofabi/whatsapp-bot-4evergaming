@@ -12,6 +12,7 @@
   "author": "4evergaming",
   "license": "ISC",
   "dependencies": {
+    "mercadopago": "^2.0.15",
     "mysql2": "^3.11.3",
     "node-cron": "^3.0.3",
     "pm2": "^5.4.2",
