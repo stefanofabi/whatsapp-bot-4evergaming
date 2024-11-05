@@ -1,4 +1,5 @@
 const { connect } = require('../databases/connection');
+const { addTransaction } = require('../utils/whmcs');
 
 async function fetchPendingInvoices(userPhone, client) {
     const db = await connect('whmcs');
@@ -148,4 +149,13 @@ async function checkDebt(userPhone, client) {
     }
 }
 
-module.exports = { fetchPendingInvoices, fetchInvoiceDetails, checkDebt };
+async function markInvoicePaid(invoiceId, transactionId, amount, paymentMethod, userPhone, client) {
+    let result = await addTransaction(invoiceId, transactionId, amount, paymentMethod);
+
+    if (result) {
+        const message = `🤖 La factura *#${invoiceId}* ha sido marcada como PAGADA ✅🙌`;
+        await client.sendMessage(userPhone + "@c.us", message);
+    }
+}
+
+module.exports = { fetchPendingInvoices, fetchInvoiceDetails, checkDebt, markInvoicePaid };

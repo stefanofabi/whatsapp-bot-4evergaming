@@ -9,7 +9,7 @@ async function fetchActiveServers(userPhone, client) {
             tblproducts.name AS productName, 
             tblhosting.domain AS domain, 
             tblhosting.amount AS amount, 
-            tblhosting.billingcycle AS billingCycle 
+            tblhosting.nextduedate 
         FROM 
             tblhosting 
         INNER JOIN 
@@ -27,13 +27,20 @@ async function fetchActiveServers(userPhone, client) {
         if (results.length === 0) {
             await client.sendMessage(userPhone + "@c.us", '🤖 No tenes servicios activos');
             await db.end();
-
             return;
         }
 
         let serversMessage = '🤖 Tus servicios activos:\n\n';
-        results.forEach(({ productName, domain, amount, billingCycle }) => {
-            serversMessage += `*Producto:* ${productName}\n*Dominio:* ${domain}\n*Precio:* \$${amount}\n*Facturación:* ${billingCycle}\n\n`;
+
+        // Función para formatear la fecha en formato "18 Jul 2024"
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            const options = { year: 'numeric', month: 'short', day: 'numeric' };
+            return date.toLocaleDateString('es-ES', options);  // Usamos 'es-ES' para obtener el mes en español
+        }
+
+        results.forEach(({ productName, domain, amount, nextduedate }) => {
+            serversMessage += `*Producto:* ${productName}\n*Dominio:* ${domain}\n*Precio:* \$${amount}\n*Vencimiento:* ${formatDate(nextduedate)}\n\n`;
         });
 
         await client.sendMessage(userPhone + "@c.us", serversMessage);

@@ -29,5 +29,13 @@
             },
             "notification_url": ""
         }
+    },
+    "api": {
+        "whmcs": {
+            "identifier": "",
+            "secret": "",
+            "accesskey": "",
+            "url": ""
+        }
     }
 }

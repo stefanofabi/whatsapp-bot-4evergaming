@@ -3,7 +3,7 @@ const qrcode = require('qrcode-terminal');
 const cron = require('node-cron');
 
 // Commands
-const { fetchPendingInvoices, fetchInvoiceDetails, checkDebt } = require('./commands/invoices');
+const { fetchPendingInvoices, fetchInvoiceDetails, checkDebt, markInvoicePaid } = require('./commands/invoices');
 const { fetchActiveServers, fetchUpcomingDueDates } = require('./commands/services');
 const { getHelpCommands } = require('./commands/help');
 const { payWithBankTransfer, payWithCard, payWithMercadoPago, payWithUala } = require('./commands/payment_gateways');
@@ -124,6 +124,31 @@ client.on('message_create', async (message) => {
 
     if (commandParts[0] === '!deuda') {
         await checkDebt(userPhone, client);
+    }
+
+    if (commandParts[0] === '!marcarpagada' && commandParts.length === 5) {
+        if (! message.fromMe) {
+            await message.reply('🤖 Comando disponible solo para acceso administrativo');
+        }
+
+        const invoiceId = parseInt(commandParts[1], 10);
+        const transactionId = parseInt(commandParts[2], 10);
+        const amount = parseInt(commandParts[3], 10);
+        const paymentMethod = commandParts[4];
+
+        if (isNaN(invoiceId) || isNaN(amount)) {
+            await message.reply('🤖 Uso correcto: !marcarpagada <factura> <transid> <amount> <paymentmethod>');
+            return;
+        }
+
+        const validPaymentMethods = ["transferencia_bancaria", "mercadopago_dinero_en_cuenta", "uala", "qr_mercadopago"]
+
+        if (! validPaymentMethods.includes(paymentMethod)) {
+            await message.reply('🤖 El metodo de pago es incorrecto');
+            return;
+        }
+
+        await markInvoicePaid(invoiceId, transactionId, amount, paymentMethod, userPhone, client);
     }
 
 });
