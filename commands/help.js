@@ -2,7 +2,7 @@ const help_commands_text = `
 🤖 Los comandos disponibles son: 
 
 Para consultar temas de facturación:
-*!facturas*: Muestra tus facturas pendientes.
+*!facturas*: Muestra tus facturas pendientes
 *!factura <id>*: Muestra los detalles de la factura
 *!vencimiento <días>*: Muestra los próximos vencimientos
 *!deuda*: Calcula la deuda de la cuenta cliente 
