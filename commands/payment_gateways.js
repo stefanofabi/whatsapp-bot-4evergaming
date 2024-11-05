@@ -1,6 +1,6 @@
 const { connect } = require('../databases/connection');
 const config = require('../config.json');
-const { MercadoPagoConfig, Preference } = require('mercadopago');
+const { createPaymentPreference }  = require('../utils/mercadopago');
 
 // Returns the total to be paid by bank transfer of all pending invoices. Otherwise, it returns an error.
 async function payWithBankTransfer(invoiceId, userPhone, client) {
@@ -75,7 +75,7 @@ async function payWithBankTransfer(invoiceId, userPhone, client) {
         }
 
         const totalSumDiscount = Math.ceil(totalSum * 0.90); 
-        invoicesMessage += `\n *Total a pagar (10% de descuento):* ~~\$${totalSum}~~ \$${totalSumDiscount}\n\n`;
+        invoicesMessage += `\n *Total a pagar (10% de descuento):* ~\$${totalSum}~ \$${totalSumDiscount}\n\n`;
 
         invoicesMessage += `Realiza tu pago con los siguientes datos:\n` +
                           `*Titular:* Stefano Fabi\n` +
@@ -127,7 +127,7 @@ async function payWithCard(invoiceId, userPhone, client) {
         let { id, date, duedate, total, status } = results[0];
 
         if (status !== 'Unpaid') {
-            await client.sendMessage(userPhone + "@c.us", '🤖 No podés pagar esta factura.\n\n Motivo: Estado de la factura '+status);
+            await client.sendMessage(userPhone + "@c.us", '🤖 No podés pagar esta factura.\n\n Motivo: Estado de la factura ' + status);
             await db.end();
             return;
         }
@@ -139,36 +139,15 @@ async function payWithCard(invoiceId, userPhone, client) {
         
         invoicesMessage += `*Factura: #${id}*\nFecha: ${formattedDate}\nVencimiento: ${formattedDueDate}\nTotal: \$${total}\n`;
 
-        const mp = new MercadoPagoConfig({ accessToken: config.payment_gateways.mercadopago.access_token, options: { timeout: 5000, idempotencyKey: 'abc' } });
-        const preference = new Preference(mp);
-
-        const body = {
-            items: [
-                {
-                    title: 'Factura 4evergaming #'+id,
-                    unit_price: Math.ceil(total),
-                    quantity: 1,
-                }
-            ],
-            back_urls: {
-                success: config.payment_gateways.mercadopago.back_urls.success,
-            },
-            auto_return: 'approved',
-            notification_url: config.payment_gateways.mercadopago.notification_url
-        };
-
-        await preference.create({ body })
-        .then(async (response) => {
-            const preferenceUrl = response.init_point;
-
+        try {
+            const preferenceUrl = await createPaymentPreference(id, total);
             invoicesMessage += `\n\n Paga ahora tu factura desde este Link: ${preferenceUrl}`;
 
             await client.sendMessage(userPhone + "@c.us", invoicesMessage);
             console.log(`[200] Message sent to ${userPhone}`);
-        })
-        .catch(err => {
-            console.log('Error creating Mercadopago preference: '+err);
-        });
+        } catch (err) {
+            console.log('Error creating payment preference: ' + err);
+        }
 
     } catch (err) {
         console.error('Error fetching invoices:', err);
@@ -249,7 +228,7 @@ async function payWithMercadoPago(invoiceId, userPhone, client) {
         }
 
         const totalSumDiscount = Math.ceil(totalSum * 0.90); 
-        invoicesMessage += `\n *Total a pagar (10% de descuento):* ~~\$${totalSum}~~ \$${totalSumDiscount}\n\n`;
+        invoicesMessage += `\n *Total a pagar (10% de descuento):* ~\$${totalSum}~ \$${totalSumDiscount}\n\n`;
 
         invoicesMessage += `
             Abri la App de MercadoPago en tu celular y transferí al correo *cobranzas@4evergaming.com.ar* \n
@@ -337,7 +316,7 @@ async function payWithUala(invoiceId, userPhone, client) {
         }
 
         const totalSumDiscount = Math.ceil(totalSum * 0.90); 
-        invoicesMessage += `\n *Total a pagar (10% de descuento):* ~~\$${totalSum}~~ \$${totalSumDiscount}\n\n`;
+        invoicesMessage += `\n *Total a pagar (10% de descuento):* ~\$${totalSum}~ \$${totalSumDiscount}\n\n`;
 
         invoicesMessage += `
             Abri la App de Uala en tu celular y buscanos con el usuario *4evergaming* \n

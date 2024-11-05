@@ -1,10 +1,13 @@
 const help_commands_text = `
-🤖 Los comandos disponibles son:
-*!estado*: Muestra si estoy en línea.
+🤖 Los comandos disponibles son: 
+
+Para consultar temas de facturación:
 *!facturas*: Muestra tus facturas pendientes.
 *!factura <id>*: Muestra los detalles de la factura
-*!servicios*: Muestra tus servicios activos.
 *!vencimiento <días>*: Muestra los próximos vencimientos
+*!deuda*: Calcula la deuda de la cuenta cliente 
+
+Para realizar pagos:
 *!transferencia <factura>*: Pagar factura mediante cbu, cvu o alias
 *!mercadopago <factura>*: Pagar factura con dinero disponible en MercadoPago
 *!uala <factura>*: Pagar factura con la App de Ualá

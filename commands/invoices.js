@@ -104,4 +104,48 @@ async function fetchInvoiceDetails(invoiceId, userPhone, client) {
     }
 }
 
-module.exports = { fetchPendingInvoices, fetchInvoiceDetails };
+async function checkDebt(userPhone, client) {
+    const db = await connect('whmcs');
+
+    const query = `
+        SELECT 
+            SUM(tblinvoices.total) AS totalDebt, 
+            SUM(CASE WHEN tblinvoices.duedate < CURDATE() THEN tblinvoices.total ELSE 0 END) AS overdueDebt
+        FROM 
+            tblinvoices 
+        INNER JOIN 
+            tblclients 
+        ON 
+            tblinvoices.userid = tblclients.id 
+        WHERE 
+            tblinvoices.status = "Unpaid" AND 
+            REPLACE(REPLACE(REPLACE(REPLACE(tblclients.phonenumber, '+', ''), '.', '9'), ' ', ''), '-', '') = ?
+        GROUP BY 
+            tblclients.id
+    `;
+
+    try {
+        const [results] = await db.execute(query, [userPhone]);
+
+        const { totalDebt, overdueDebt } = results[0];
+        const totalDebtDiscount = Math.ceil(totalDebt * 0.90); // 10% discount on total
+
+        const message = `
+            🤖 Te envio el estado de tu cuenta: \n
+            Deuda total pendiente: \$${totalDebt}\n
+            Deuda vencida: \$${overdueDebt}\n
+            *Total a pagar con descuento (10%):* ~\$${totalDebt}~ \$${totalDebtDiscount}\n\n
+            Alias para hacer el pago: *4evergaming*\n
+            Por favor enviar el comprobante de la transferencia 🙏
+        `;
+
+        await client.sendMessage(userPhone + "@c.us", message);
+        console.log(`[200] Message sent to ${userPhone}`);
+    } catch (err) {
+        console.error('Error fetching invoices:', err);
+    } finally {
+        await db.end();
+    }
+}
+
+module.exports = { fetchPendingInvoices, fetchInvoiceDetails, checkDebt };

@@ -3,10 +3,10 @@ const qrcode = require('qrcode-terminal');
 const cron = require('node-cron');
 
 // Commands
-const { fetchPendingInvoices, fetchInvoiceDetails } = require('./commands/invoices');
+const { fetchPendingInvoices, fetchInvoiceDetails, checkDebt } = require('./commands/invoices');
 const { fetchActiveServers, fetchUpcomingDueDates } = require('./commands/services');
 const { getHelpCommands } = require('./commands/help');
-const { payWithBankTransfer, payWithCard, payWithMercadoPago, payWithUala} = require('./commands/payment_gateways');
+const { payWithBankTransfer, payWithCard, payWithMercadoPago, payWithUala } = require('./commands/payment_gateways');
 
 // Crons
 const fetchAndSendMessages = require('./crons/message_sender');
@@ -120,6 +120,10 @@ client.on('message_create', async (message) => {
         const invoiceId = parseInt(commandParts[1], 10);
 
         await payWithUala(invoiceId, userPhone, client);
+    }
+
+    if (commandParts[0] === '!deuda') {
+        await checkDebt(userPhone, client);
     }
 
 });
