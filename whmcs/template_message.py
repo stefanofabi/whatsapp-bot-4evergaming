@@ -76,7 +76,7 @@ Saludos!
 """
 
 client_area_login = """
-🤖 Nuevo inicio de sesión en el área de clientes 🚨\n\n
+🤖 Nuevo inicio de sesión en el área de clientes \n\n
 
 *Correo:* {email} \n
 *Fecha:* {lastlogin}\n

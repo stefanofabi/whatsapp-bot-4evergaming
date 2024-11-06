@@ -1,6 +1,9 @@
 const help_commands_text = `
 🤖 Los comandos disponibles son: 
 
+Para consultar por tus servicios:
+*!servicios*: Muestra el detalle de los servicios activos
+
 Para consultar temas de facturación:
 *!facturas*: Muestra tus facturas pendientes
 *!factura <id>*: Muestra los detalles de la factura
