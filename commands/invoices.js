@@ -128,6 +128,12 @@ async function checkDebt(userPhone, client) {
     try {
         const [results] = await db.execute(query, [userPhone]);
 
+        if (results.length === 0) {
+            const noDebtMessage = `🤖 No tenés deudas pendientes. Gracias por estar al día! 😊`;
+            await client.sendMessage(userPhone + "@c.us", noDebtMessage);
+            return;
+        }
+
         const { totalDebt, overdueDebt } = results[0];
         const totalDebtDiscount = Math.ceil(totalDebt * 0.90); // 10% discount on total
 
