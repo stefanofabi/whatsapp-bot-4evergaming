@@ -141,7 +141,7 @@ client.on('message_create', async (message) => {
             return;
         }
 
-        const validPaymentMethods = ["transferencia_bancaria", "mercadopago_dinero_en_cuenta", "uala", "qr_mercadopago"]
+        const validPaymentMethods = ["transferencia_bancaria", "mercadopago_dinero_en_cuenta", "uala", "qr_mercadopago", "mercadopago_1"]
 
         if (! validPaymentMethods.includes(paymentMethod)) {
             await message.reply('🤖 El metodo de pago es incorrecto');

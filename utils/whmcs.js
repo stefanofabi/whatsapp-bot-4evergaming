@@ -26,6 +26,7 @@ async function addTransaction(invoiceId, transactionId, amount, paymentMethod) {
         secret: config.api.whmcs.secret,
         accesskey: config.api.whmcs.accesskey,
         invoiceid: invoiceId,
+        description: 'Bot Payment',
         amountin: amount,
         paymentmethod: paymentMethod
     };
