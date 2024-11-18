@@ -37,13 +37,13 @@ for user in resultUsers:
     if (user[6] == "AR"): 
         phone = "+549" + phone
     elif (user[6] == "CL"): 
-        phone = "+569" + phone
+        phone = "+56" + phone
     elif (user[6] == "UY"): 
-        phone = "+5989" + phone
+        phone = "+598" + phone
     elif (user[6] == "PE"): 
-        phone = "+519" + phone
+        phone = "+51" + phone
     elif (user[6] == "EC"): 
-        phone = "+5939" + phone
+        phone = "+593" + phone
     else:
         continue
 

@@ -79,3 +79,17 @@ CURRENCY_CODES = {
     "6": "PYG",
     "7": "EUR",
 }
+
+def formatNumber(number):
+    if number.startswith("+54"):
+        formatted_number = number.replace('.', '9').replace('-', '').replace(' ', '')
+    
+    elif number.startswith("+52"):
+        formatted_number = number.replace('.', '1').replace('-', '').replace(' ', '')
+    
+    else:
+        formatted_number = number.replace('.', '').replace('-', '').replace(' ', '')
+    
+    return formatted_number
+
+

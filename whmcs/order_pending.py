@@ -41,7 +41,7 @@ for order in resultOrders:
     for client in resultClients:
         clientId = client[0]
         firstName = client[1].split(" ")[0]
-        phone = client[3].replace('.', '9').replace('-', '').replace(' ', '')
+        phone = config.formatNumber(client[3])
 
         # Prepare the message to send
         messageToSend = template_message.order_pending.format(firstName=firstName)

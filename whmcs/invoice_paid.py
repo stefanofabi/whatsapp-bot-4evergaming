@@ -40,7 +40,7 @@ for invoice in resultInvoices:
     for client in resultClients:
         clientId = client[0]
         firstName = client[1].split(" ")[0]
-        phone = client[3].replace('.', '9').replace('-', '').replace(' ', '')
+        phone = config.formatNumber(client[3])
 
         # Create the message to send
         messageToSend = template_message.invoice_paid.format(firstName=firstName, invoiceNumber=invoiceNumber)
