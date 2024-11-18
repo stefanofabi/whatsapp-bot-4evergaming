@@ -56,12 +56,20 @@ client.on('message_create', async (message) => {
         userPhone = message.to.split('@')[0];
     }
 
-    if (commandParts[0] === '!ayuda' || commandParts[0] === '!help') {
-        await getHelpCommands(userPhone, client);
-    }
-
     if (commandParts[0] === '!status' || commandParts[0] === '!estado') {
         await message.reply('🤖 Estoy en linea');
+    }
+
+    if (commandParts[0] === '!chatid') {
+        if (message.fromMe) {
+            await message.reply('🤖 El chat id es '+message.to);
+        } else {
+            await message.reply('🤖 El chat id es '+message.from);
+        }
+    }
+
+    if (commandParts[0] === '!ayuda' || commandParts[0] === '!help') {
+        await getHelpCommands(userPhone, client);
     }
 
     if (commandParts[0] === '!misfacturas' || commandParts[0] === '!facturas') {
