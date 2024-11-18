@@ -7,15 +7,19 @@ async function fetchActiveServers(userPhone, client) {
     const query = `
         SELECT 
             tblproducts.name AS productName, 
+            tblproducts.type,
             tblhosting.domain AS domain, 
             tblhosting.amount AS amount, 
-            tblhosting.nextduedate 
+            tblhosting.nextduedate,
+            tblcurrencies.code
         FROM 
             tblhosting 
         INNER JOIN 
             tblclients ON tblhosting.userid = tblclients.id 
         INNER JOIN 
             tblproducts ON tblhosting.packageid = tblproducts.id 
+        INNER JOIN
+            tblcurrencies ON tblclients.currency = tblcurrencies.id
         WHERE 
             tblhosting.domainstatus = "Active" AND
             CASE 
@@ -43,8 +47,10 @@ async function fetchActiveServers(userPhone, client) {
             return date.toLocaleDateString('es-ES', options);  // Usamos 'es-ES' para obtener el mes en español
         }
 
-        results.forEach(({ productName, domain, amount, nextduedate }) => {
-            serversMessage += `*Producto:* ${productName}\n*Dominio:* ${domain}\n*Precio:* \$${amount}\n*Vencimiento:* ${formatDate(nextduedate)}\n\n`;
+        results.forEach(({ productName, type, domain, amount, nextduedate, code }) => {
+            const domainOrIp = type === 'hostingaccount' ? 'Dominio' : (productName.includes('Dominio') ? 'Dominio' : 'IP');
+        
+            serversMessage += `*Producto:* ${productName}\n*${domainOrIp}:* ${domain}\n*Precio:*  \$${amount} ${code}\n*Vencimiento:* ${formatDate(nextduedate)}\n\n`;
         });
 
         await client.sendMessage(userPhone + "@c.us", serversMessage);
@@ -63,16 +69,20 @@ async function fetchUpcomingDueDates(days, userPhone, client) {
     const query = `
         SELECT 
             tblproducts.name AS productName, 
+            tblproducts.type,
             tblhosting.domain AS domain, 
             tblhosting.amount AS amount, 
             tblhosting.billingcycle AS billingCycle, 
-            tblhosting.nextduedate
+            tblhosting.nextduedate,
+            tblcurrencies.code
         FROM 
             tblhosting 
         INNER JOIN 
             tblclients ON tblhosting.userid = tblclients.id 
         INNER JOIN 
             tblproducts ON tblhosting.packageid = tblproducts.id 
+        INNER JOIN
+            tblcurrencies ON tblclients.currency = tblcurrencies.id
         WHERE 
             tblhosting.domainstatus = "Active" AND
             tblhosting.nextduedate <= DATE_ADD(CURDATE(), INTERVAL ? DAY) AND
@@ -94,8 +104,10 @@ async function fetchUpcomingDueDates(days, userPhone, client) {
         }
 
         let serversMessage = '🤖 Los servicios próximos a vencer son:\n\n';
-        results.forEach(({ productName, domain, amount, billingCycle, nextduedate }) => {
-            serversMessage += `*Producto:* ${productName}\n*Dominio:* ${domain}\n*Precio:* \$${amount}\n*Facturación:* ${billingCycle}\n*Fecha de Vencimiento:* ${formatDate(nextduedate)}\n\n`;
+        results.forEach(({ productName, type, domain, amount, billingCycle, nextduedate }) => {
+            const domainOrIp = type === 'hostingaccount' ? 'Dominio' : (productName.includes('Dominio') ? 'Dominio' : 'IP');
+
+            serversMessage += `*Producto:* ${productName}\n*${domainOrIp}:* ${domain}\n*Precio:*  \$${amount} ${code}\n*Facturación:* ${billingCycle}\n*Fecha de Vencimiento:* ${formatDate(nextduedate)}\n\n`;
         });
 
         await client.sendMessage(userPhone + "@c.us", serversMessage);
