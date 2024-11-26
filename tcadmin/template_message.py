@@ -5,24 +5,21 @@
 # Ultima IP: {ip}
 # Nombre de usuario: {username}
 
-user_login = """
-🤖 Nuevo inicio de sesión en el panel TCAdmin \n\n
+user_login = """🤖 Nuevo inicio de sesión en el panel TCAdmin
 
-*Usuario:* {username} \n
-*Fecha:* {lastlogin}\n
+*Usuario:* {username} 
+*Fecha:* {lastlogin}
 *IP:* {ip}
 """
 
-last_activity = """
-🤖 Nueva actividad en TCAdmin \n
+last_activity = """🤖 Nueva actividad en TCAdmin 
 
 {tasks}
 """
 
-server_started = """
-🤖 Nuevo inicio del servidor \n\n
+server_started = """🤖 Nuevo inicio del servidor
 
-*IP:* {ip_address}:{game_port}\n
-*Nombre:* {server_name}\n
+*IP:* {ip_address}:{game_port}
+*Nombre:* {server_name}
 *Último inicio:* {start_time}
 """

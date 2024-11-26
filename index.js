@@ -7,6 +7,7 @@ const { fetchPendingInvoices, fetchInvoiceDetails, checkDebt, markInvoicePaid } 
 const { fetchActiveServers, fetchUpcomingDueDates } = require('./commands/services');
 const { getHelpCommands } = require('./commands/help');
 const { payWithBankTransfer, payWithCard, payWithMercadoPago, payWithUala } = require('./commands/payment_gateways');
+const { getClientDetails } = require('./commands/clients');
 
 // Crons
 const fetchAndSendMessages = require('./crons/message_sender');
@@ -34,7 +35,13 @@ client.on('ready', () => {
 });
 
 // Schedule the message sending task every 5 minutes
-cron.schedule('*/5 * * * *', async () => await fetchAndSendMessages(client));
+cron.schedule('*/5 * * * *', async () => {
+    if (isReady) {
+        await fetchAndSendMessages(client);
+    } else {
+        console.log('El cliente WhatsApp no está listo, esperando...');
+    }
+});
 
 // Event when WhatsApp client disconnects
 client.on("disconnected", (reason) => {
@@ -157,6 +164,10 @@ client.on('message_create', async (message) => {
         }
 
         await markInvoicePaid(invoiceId, transactionId, amount, paymentMethod, userPhone, client);
+    }
+
+    if (commandParts[0] === '!cliente') {
+        await getClientDetails(userPhone, client);
     }
 
 });
