@@ -2,14 +2,6 @@ const axios = require('axios');
 const qs = require('qs');
 const config = require('../config.json');
 
-function getTodayDate() {
-  const today = new Date();
-  const day = today.getDate().toString().padStart(2, '0');
-  const month = (today.getMonth() + 1).toString().padStart(2, '0');
-  const year = today.getFullYear();
-  return `${day}/${month}/${year}`;
-}
-
 async function addTransaction(invoiceId, transactionId, amount, paymentMethod) {
     let result = false;
 

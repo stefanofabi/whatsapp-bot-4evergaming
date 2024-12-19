@@ -113,6 +113,59 @@ async function fetchInvoiceDetails(invoiceId, userPhone, client) {
     }
 }
 
+async function fetchInvoiceItems(invoiceId, userPhone, client) {
+    const db = await connect('whmcs');
+    
+    const query = `
+        SELECT 
+            tblinvoiceitems.invoiceid,
+            tblinvoiceitems.description,
+            tblinvoiceitems.amount,
+            tblinvoiceitems.duedate
+        FROM 
+            tblinvoiceitems 
+        INNER JOIN 
+            tblclients 
+        ON 
+            tblinvoiceitems.userid = tblclients.id 
+        WHERE 
+            tblinvoiceitems.invoiceid = ? AND
+            CASE 
+                WHEN tblclients.phonenumber LIKE '+54%' THEN REPLACE(REPLACE(REPLACE(REPLACE(tblclients.phonenumber, '+', ''), '.', '9'), ' ', ''), '-', '')
+                WHEN tblclients.phonenumber LIKE '+52%' THEN REPLACE(REPLACE(REPLACE(REPLACE(tblclients.phonenumber, '+', ''), '.', '1'), ' ', ''), '-', '')
+                ELSE REPLACE(REPLACE(REPLACE(REPLACE(tblclients.phonenumber, '+', ''), ' ', ''), '-', ''), '.', '') 
+            END = ?
+    `;
+
+    try {
+        const [results] = await db.execute(query, [invoiceId, userPhone]);
+
+        if (results.length === 0) {
+            await client.sendMessage(userPhone + "@c.us", `🤖 No se encontró la factura #${invoiceId}`);
+            await db.end();
+            
+            return;
+        }
+
+        const { invoiceid, description, amount, duedate } = results[0];
+        const formattedDueDate = new Date(duedate).toLocaleDateString('es-AR', { day: 'numeric', month: 'long', year: 'numeric' });
+        
+        const invoiceDetailsMessage = `🤖 Los items de tu factura #${invoiceid}:\n
+            *Descripción:* ${description}\n
+            *Monto:* \$${amount}\n
+            *Vencimiento:* ${formattedDueDate}
+        `;
+        
+        await client.sendMessage(userPhone + "@c.us", invoiceDetailsMessage);
+        console.log(`[200] Message sent to  ${userPhone}`);
+        
+    } catch (err) {
+        console.error('Error fetching invoice items:', err);
+    } finally {
+        await db.end();
+    }
+}
+
 async function checkDebt(userPhone, client) {
     const db = await connect('whmcs');
 
@@ -176,4 +229,4 @@ async function markInvoicePaid(invoiceId, transactionId, amount, paymentMethod, 
     }
 }
 
-module.exports = { fetchPendingInvoices, fetchInvoiceDetails, checkDebt, markInvoicePaid };
+module.exports = { fetchPendingInvoices, fetchInvoiceDetails, fetchInvoiceItems, checkDebt, markInvoicePaid };
