@@ -56,7 +56,7 @@ for client in clients:
     
     # Insert the message into the database
     insert_sql = "INSERT INTO messages (phone, message) VALUES (%s, %s)"
-    whatsapp_access.execute(insert_sql, (phone, messageToSend))
+    whatsapp_access.execute(insert_sql, (phone + "@c.us", messageToSend))
     config.db_whatsapp.commit()  # Commit the transaction
 
     print("Message saved in the database for user #" + str(client[0])) 

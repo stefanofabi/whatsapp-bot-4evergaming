@@ -1,5 +1,7 @@
 const { connect } = require('../databases/connection');
 const { addTransaction } = require('../utils/whmcs');
+const { sendMessage } = require('../utils/messages');
+const { formatDate } = require('../utils/dates'); // Incluimos el archivo dates.js
 
 async function fetchPendingInvoices(userPhone, client) {
     const db = await connect('whmcs');
@@ -27,24 +29,20 @@ async function fetchPendingInvoices(userPhone, client) {
     `;
 
     try {
-        const [results] = await db.execute(query, ["Unpaid", userPhone]);
+        const [results] = await db.execute(query, ["Unpaid", userPhone.split('@')[0]]);
 
         if (results.length === 0) {
-            await client.sendMessage(userPhone + "@c.us", '🤖 No hay facturas pendientes');
+            await sendMessage(client, userPhone, '🤖 No hay facturas pendientes');
             await db.end();
-
             return;
         }
 
         let invoicesMessage = '🤖 Acá están tus facturas pendientes:\n\n';
         results.forEach(({ id, date, duedate, total, paymentmethod }) => {
-            const formattedDate = new Date(date).toLocaleDateString('es-AR', { day: 'numeric', month: 'long', year: 'numeric' });
-            const formattedDueDate = new Date(duedate).toLocaleDateString('es-AR', { day: 'numeric', month: 'long', year: 'numeric' });
-
-            invoicesMessage += `Factura: #${id}\nFecha: ${formattedDate}\nVencimiento: ${formattedDueDate}\nTotal: \$${total}\n\n`;
+            invoicesMessage += `Factura: #${id}\nFecha: ${formatDate(date)}\nVencimiento: ${formatDate(duedate)}\nTotal: \$${total}\n\n`;
         });
 
-        await client.sendMessage(userPhone + "@c.us", invoicesMessage);
+        await sendMessage(client, userPhone, invoicesMessage);
         console.log(`[200] Message sent to  ${userPhone}`);
     } catch (err) {
         console.error('Error fetching invoices:', err);
@@ -82,29 +80,25 @@ async function fetchInvoiceDetails(invoiceId, userPhone, client) {
     `;
 
     try {
-        const [results] = await db.execute(query, [invoiceId, userPhone]);
+        const [results] = await db.execute(query, [invoiceId, userPhone.split('@')[0]]);
 
         if (results.length === 0) {
-            await client.sendMessage(userPhone + "@c.us", `🤖 No se encontró la factura #${invoiceId}`);
+            await sendMessage(client, userPhone, `🤖 No se encontró la factura #${invoiceId}`);
             await db.end();
-            
             return;
         }
 
         const { id, date, duedate, total, status, paymentmethod, firstname, lastname } = results[0];
-        const formattedDate = new Date(date).toLocaleDateString('es-AR', { day: 'numeric', month: 'long', year: 'numeric' });
-        const formattedDueDate = new Date(duedate).toLocaleDateString('es-AR', { day: 'numeric', month: 'long', year: 'numeric' });
-
         const invoiceDetailsMessage = `🤖 Los datos de tu factura #${id}:\n
             *Cliente:* ${firstname} ${lastname}\n
-            *Fecha:* ${formattedDate}\n
-            *Vencimiento:* ${formattedDueDate}\n
+            *Fecha:* ${formatDate(date)}\n
+            *Vencimiento:* ${formatDate(duedate)}\n
             *Estado:* ${status}\n
             *Total:* \$${total}\n
             *Método de pago:* ${paymentmethod}
         `;
 
-        await client.sendMessage(userPhone + "@c.us", invoiceDetailsMessage);
+        await sendMessage(client, userPhone, invoiceDetailsMessage);
         console.log(`[200] Message sent to  ${userPhone}`);
     } catch (err) {
         console.error('Error fetching invoice details:', err);
@@ -138,26 +132,22 @@ async function fetchInvoiceItems(invoiceId, userPhone, client) {
     `;
 
     try {
-        const [results] = await db.execute(query, [invoiceId, userPhone]);
+        const [results] = await db.execute(query, [invoiceId, userPhone.split('@')[0]]);
 
         if (results.length === 0) {
-            await client.sendMessage(userPhone + "@c.us", `🤖 No se encontró la factura #${invoiceId}`);
+            await sendMessage(client, userPhone, `🤖 No se encontró la factura #${invoiceId}`);
             await db.end();
-            
             return;
         }
 
         const { invoiceid, description, amount, duedate } = results[0];
-        const formattedDueDate = new Date(duedate).toLocaleDateString('es-AR', { day: 'numeric', month: 'long', year: 'numeric' });
+        const invoiceDetailsMessage = `🤖 Los items de tu factura #${invoiceid}:` +
+            `*Descripción:* ${description}` +
+            `*Monto:* \$${amount}` +
+            `*Vencimiento:* ${formatDate(duedate)}\n`;
         
-        const invoiceDetailsMessage = `🤖 Los items de tu factura #${invoiceid}:\n
-            *Descripción:* ${description}\n
-            *Monto:* \$${amount}\n
-            *Vencimiento:* ${formattedDueDate}
-        `;
-        
-        await client.sendMessage(userPhone + "@c.us", invoiceDetailsMessage);
-        console.log(`[200] Message sent to  ${userPhone}`);
+        await sendMessage(client, userPhone, invoiceDetailsMessage);
+        console.log(`[200] Message sent to ${userPhone}`);
         
     } catch (err) {
         console.error('Error fetching invoice items:', err);
@@ -191,16 +181,16 @@ async function checkDebt(userPhone, client) {
     `;
 
     try {
-        const [results] = await db.execute(query, [userPhone]);
+        const [results] = await db.execute(query, [userPhone.split('@')[0]]);
 
         if (results.length === 0) {
             const noDebtMessage = `🤖 No tenés deudas pendientes. Gracias por estar al día! 😊`;
-            await client.sendMessage(userPhone + "@c.us", noDebtMessage);
+            await sendMessage(client, userPhone, noDebtMessage);
             return;
         }
 
         const { totalDebt, overdueDebt } = results[0];
-        const totalDebtDiscount = Math.ceil(totalDebt * 0.90); // 10% discount on total
+        const totalDebtDiscount = Math.ceil(totalDebt * 0.90); 
 
         const message = `
             🤖 Te envio el estado de tu cuenta: \n
@@ -211,7 +201,7 @@ async function checkDebt(userPhone, client) {
             Por favor enviar el comprobante de la transferencia 🙏
         `;
 
-        await client.sendMessage(userPhone + "@c.us", message);
+        await sendMessage(client, userPhone, message);
         console.log(`[200] Message sent to ${userPhone}`);
     } catch (err) {
         console.error('Error fetching invoices:', err);
@@ -225,7 +215,7 @@ async function markInvoicePaid(invoiceId, transactionId, amount, paymentMethod, 
 
     if (result) {
         const message = `🤖 La factura *#${invoiceId}* ha sido marcada como PAGADA ✅🙌`;
-        await client.sendMessage(userPhone + "@c.us", message);
+        await sendMessage(client, userPhone, message);
     }
 }
 

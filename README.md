@@ -34,18 +34,18 @@ npm start
 
 Then set up a cron every 5 minutes and set permissions:
 ```bash
-chmod +x /root/whatsapp-bot-4evergaming/run_every_5_minutes.sh
-chmod +x /root/whatsapp-bot-4evergaming/run_every_60_minutes.sh
-chmod +x /root/whatsapp-bot-4evergaming/run_every_at_11_am.sh
+chmod +x /root/whatsapp-bot-4evergaming/scripts/run_every_5_minutes.sh
+chmod +x /root/whatsapp-bot-4evergaming/scripts/run_every_60_minutes.sh
+chmod +x /root/whatsapp-bot-4evergaming/scripts/run_every_at_11_am.sh
 
 
 crontab -e
 @reboot sleep 5 && node /root/whatsapp-bot-4evergaming/index.js &
 
-*/5 * * * * /root/whatsapp-bot-4evergaming/run_every_5_minutes.sh
-*/60 * * * * /root/whatsapp-bot-4evergaming/run_every_60_minutes.sh
+*/5 * * * * /root/whatsapp-bot-4evergaming/scripts/run_every_5_minutes.sh
+*/60 * * * * /root/whatsapp-bot-4evergaming/scripts/run_every_60_minutes.sh
 
-0 11 * * * /root/whatsapp-bot-4evergaming/run_every_at_11_am.sh
+0 11 * * * /root/whatsapp-bot-4evergaming/scripts/run_every_at_11_am.sh
 ```
 
 # Considerations

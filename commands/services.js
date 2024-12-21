@@ -1,4 +1,6 @@
 const { connect } = require('../databases/connection');
+const { sendMessage } = require('../utils/messages');
+const { formatDate } = require('../utils/dates');
 
 // Function to fetch active servers
 async function fetchActiveServers(userPhone, client) {
@@ -30,22 +32,15 @@ async function fetchActiveServers(userPhone, client) {
     `;
 
     try {
-        const [results] = await db.execute(query, [userPhone]);
+        const [results] = await db.execute(query, [userPhone.split('@')[0]]);
 
         if (results.length === 0) {
-            await client.sendMessage(userPhone + "@c.us", '🤖 No tenes servicios activos');
+            await sendMessage(client, userPhone, '🤖 No tenes servicios activos');
             await db.end();
             return;
         }
 
         let serversMessage = '🤖 Tus servicios activos:\n\n';
-
-        // Función para formatear la fecha en formato "18 Jul 2024"
-        function formatDate(dateString) {
-            const date = new Date(dateString);
-            const options = { year: 'numeric', month: 'short', day: 'numeric' };
-            return date.toLocaleDateString('es-ES', options);  // Usamos 'es-ES' para obtener el mes en español
-        }
 
         results.forEach(({ productName, type, domain, amount, nextduedate, code }) => {
             const domainOrIp = type === 'hostingaccount' ? 'Dominio' : (productName.includes('Dominio') ? 'Dominio' : 'IP');
@@ -53,7 +48,7 @@ async function fetchActiveServers(userPhone, client) {
             serversMessage += `*Producto:* ${productName}\n*${domainOrIp}:* ${domain}\n*Precio:*  \$${amount} ${code}\n*Vencimiento:* ${formatDate(nextduedate)}\n\n`;
         });
 
-        await client.sendMessage(userPhone + "@c.us", serversMessage);
+        await sendMessage(client, userPhone, serversMessage);
         console.log(`[200] Message sent to ${userPhone}`);
     } catch (err) {
         console.error('Error fetching active servers:', err);
@@ -94,10 +89,10 @@ async function fetchUpcomingDueDates(days, userPhone, client) {
     `;
 
     try {
-        const [results] = await db.execute(query, [days, userPhone]);
+        const [results] = await db.execute(query, [days, userPhone.split('@')[0]]);
 
         if (results.length === 0) {
-            await client.sendMessage(userPhone + "@c.us", '🤖 No tenes vencimientos en los próximos ' + days + " días");
+            await sendMessage(client, userPhone, '🤖 No tenes vencimientos en los próximos ' + days + " días");
             await db.end();
             
             return;
@@ -110,18 +105,13 @@ async function fetchUpcomingDueDates(days, userPhone, client) {
             serversMessage += `*Producto:* ${productName}\n*${domainOrIp}:* ${domain}\n*Precio:*  \$${amount} ${code}\n*Facturación:* ${billingCycle}\n*Fecha de Vencimiento:* ${formatDate(nextduedate)}\n\n`;
         });
 
-        await client.sendMessage(userPhone + "@c.us", serversMessage);
+        await sendMessage(client, userPhone, serversMessage);
         console.log(`[200] Message sent to ${userPhone}`);
     } catch (err) {
         console.error('Error fetching upcoming due dates:', err);
     } finally {
         await db.end();
     }
-}
-
-function formatDate(date) {
-    const options = { day: '2-digit', month: 'long', year: 'numeric' };
-    return new Intl.DateTimeFormat('es-ES', options).format(new Date(date));
 }
 
 module.exports = { fetchActiveServers, fetchUpcomingDueDates };

@@ -61,11 +61,11 @@ for user in resultUsers:
     if (tasks == ""):
         continue
 
-    messageToSend = template_message.last_activity.format(firstName=firstName, lastName=lastName, phone=phone, tasks=tasks)
+    messageToSend = template_message.last_activity.format(tasks=tasks)
 
     # Insert the message into the database
     insert_sql = "INSERT INTO messages (phone, message) VALUES (%s, %s)"
-    whatsapp_access.execute(insert_sql, (phone, messageToSend))
+    whatsapp_access.execute(insert_sql, (phone + "@c.us", messageToSend))
     config.db_whatsapp.commit()  # Commit the transaction
 
     print("Message saved in the database for user #" + str(user[0]))

@@ -24,7 +24,7 @@ async function fetchAndSendMessages(client) {
 
         for (const { id, phone, message } of results) {
             try {
-                await client.sendMessage(phone.substring(1) + "@c.us", message);
+                await client.sendMessage(phone.substring(1), message);
                 console.log(`[${getCurrentDateTime()}] [200] Message sent to ${phone}`);
 
                 // Delete the message from the database after sending

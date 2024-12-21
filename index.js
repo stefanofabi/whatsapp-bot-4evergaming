@@ -55,12 +55,12 @@ client.on("disconnected", (reason) => {
 client.on('message_create', async (message) => {
     if (! isReady) return;
     
-    let userPhone = message.from.split('@')[0];
+    let userPhone = message.from;
     const commandParts = message.body.split(' ');
     
     // If I send the message, the message will still be directed to the client.
     if (message.fromMe) {
-        userPhone = message.to.split('@')[0];
+        userPhone = message.to;
     }
 
     if (commandParts[0] === '!status' || commandParts[0] === '!estado') {

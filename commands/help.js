@@ -1,5 +1,6 @@
-const help_commands_text = `
-🤖 Los comandos disponibles son: 
+const { sendMessage } = require('../utils/messages');
+
+const help_commands_text = `🤖 Los comandos disponibles son: 
 
 Para consultar por tus servicios:
 *!servicios*: Muestra el detalle de los servicios activos
@@ -18,13 +19,12 @@ Para realizar pagos:
 `;
 
 async function getHelpCommands(userPhone, client) {
-    await client.sendMessage(userPhone + "@c.us", help_commands_text)
-    .then(response => {
-        console.log(`[200] Message sent to  ${userPhone}`);
-    })
-    .catch(error => {
+    try {
+        await sendMessage(client, userPhone, help_commands_text);
+        console.log(`[200] Message sent to ${userPhone}`);
+    } catch (error) {
         console.error(`[500] Error sending message to ${userPhone}:`, error);
-    });
+    }
 }
 
 module.exports = { getHelpCommands };
