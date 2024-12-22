@@ -31,15 +31,15 @@ for x in clients:
     phone = x[7].replace('.', '9').replace('-', '').replace(' ', '')
     
     if (x[6] == "AR"): 
-        phone = "+549" + phone
+        phone = "549" + phone
     elif (x[6] == "CL"): 
-        phone = "+56" + phone
+        phone = "56" + phone
     elif (x[6] == "UY"): 
-        phone = "+598" + phone
+        phone = "598" + phone
     elif (x[6] == "PE"): 
-        phone = "+51" + phone
+        phone = "51" + phone
     elif (x[6] == "EC"): 
-        phone = "+593" + phone
+        phone = "593" + phone
     else:
         continue
     

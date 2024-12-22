@@ -35,15 +35,15 @@ for user in resultUsers:
     phone = user[7].replace('-', '').replace(' ', '')
 
     if (user[6] == "AR"): 
-        phone = "+549" + phone
+        phone = "549" + phone
     elif (user[6] == "CL"): 
-        phone = "+56" + phone
+        phone = "56" + phone
     elif (user[6] == "UY"): 
-        phone = "+598" + phone
+        phone = "598" + phone
     elif (user[6] == "PE"): 
-        phone = "+51" + phone
+        phone = "51" + phone
     elif (user[6] == "EC"): 
-        phone = "+593" + phone
+        phone = "593" + phone
     else:
         continue
 

@@ -39,7 +39,7 @@ cron.schedule('*/5 * * * *', async () => {
     if (isReady) {
         await fetchAndSendMessages(client);
     } else {
-        console.log('El cliente WhatsApp no está listo, esperando...');
+        console.log('WhatsApp is not available, waiting...');
     }
 });
 
