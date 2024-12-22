@@ -5,7 +5,7 @@ const { formatDate } = require('../utils/dates');
 async function fetchAndSendMessages(client) {
     const db = await connect('whatsapp');
 
-    const dateToday = formatDate(new Date);
+    const dateToday = formatDate(new Date, true);
 
     console.log(`[${dateToday}] Running scheduled task to send messages`);
 
