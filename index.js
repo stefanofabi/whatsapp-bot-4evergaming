@@ -35,7 +35,7 @@ client.on('ready', () => {
 });
 
 // Schedule the message sending task every 5 minutes
-cron.schedule('*/5 * * * *', async () => {
+cron.schedule('*/1 * * * *', async () => {
     if (isReady) {
         await fetchAndSendMessages(client);
     } else {
