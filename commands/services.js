@@ -23,7 +23,7 @@ async function fetchActiveServers(userPhone, client) {
         INNER JOIN
             tblcurrencies ON tblclients.currency = tblcurrencies.id
         WHERE 
-            tblhosting.domainstatus = "Active" AND
+            tblhosting.domainstatus IN ("Active", "Suspended") AND
             CASE 
                 WHEN tblclients.phonenumber LIKE '+54%' THEN REPLACE(REPLACE(REPLACE(REPLACE(tblclients.phonenumber, '+', ''), '.', '9'), ' ', ''), '-', '')
                 WHEN tblclients.phonenumber LIKE '+52%' THEN REPLACE(REPLACE(REPLACE(REPLACE(tblclients.phonenumber, '+', ''), '.', '1'), ' ', ''), '-', '')
