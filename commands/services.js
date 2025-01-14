@@ -114,4 +114,43 @@ async function fetchUpcomingDueDates(days, userPhone, client) {
     }
 }
 
-module.exports = { fetchActiveServers, fetchUpcomingDueDates };
+async function getTotalSumOfContractedServices(userPhone, client) {
+    const db = await connect('whmcs');
+
+    const query = `
+        SELECT 
+            ROUND(SUM(tblhosting.amount)) AS amount
+        FROM 
+            tblhosting 
+        INNER JOIN 
+            tblclients ON tblhosting.userid = tblclients.id 
+        WHERE 
+            tblhosting.domainstatus IN ("Active", "Suspended") AND
+            CASE 
+                WHEN tblclients.phonenumber LIKE '+54%' THEN REPLACE(REPLACE(REPLACE(REPLACE(tblclients.phonenumber, '+', ''), '.', '9'), ' ', ''), '-', '')
+                WHEN tblclients.phonenumber LIKE '+52%' THEN REPLACE(REPLACE(REPLACE(REPLACE(tblclients.phonenumber, '+', ''), '.', '1'), ' ', ''), '-', '')
+                ELSE REPLACE(REPLACE(REPLACE(REPLACE(tblclients.phonenumber, '+', ''), ' ', ''), '-', ''), '.', '') 
+            END = ?
+    `;
+
+    try {
+        const [results] = await db.execute(query, [userPhone.split('@')[0]]);
+
+        if (results.length === 0 || results[0].amount === null) {
+            await sendMessage(client, userPhone, '🤖 No tenés servicios activos o suspendidos');
+            console.log(`[200] No contracted services found for ${userPhone}`);
+            await db.end();
+            return;
+        }
+
+        const totalAmount = results[0].amount;
+        await sendMessage(client, userPhone, `🤖 El total de tus servicios contratados es: \$${totalAmount}`);
+        console.log(`[200] Total sum sent to ${userPhone}: \$${totalAmount}`);
+    } catch (err) {
+        console.error('Error fetching total sum of contracted services:', err);
+    } finally {
+        await db.end();
+    }
+}
+
+module.exports = { fetchActiveServers, fetchUpcomingDueDates, getTotalSumOfContractedServices };

@@ -4,7 +4,7 @@ const cron = require('node-cron');
 
 // Commands
 const { fetchPendingInvoices, fetchInvoiceDetails, fetchInvoiceItems, checkDebt, markInvoicePaid } = require('./commands/invoices');
-const { fetchActiveServers, fetchUpcomingDueDates } = require('./commands/services');
+const { fetchActiveServers, fetchUpcomingDueDates, getTotalSumOfContractedServices } = require('./commands/services');
 const { getHelpCommands } = require('./commands/help');
 const { payWithBankTransfer, payWithCard, payWithMercadoPago, payWithUala } = require('./commands/payment_gateways');
 const { getClientDetails } = require('./commands/clients');
@@ -107,6 +107,10 @@ client.on('message_create', async (message) => {
 
     if (commandParts[0] === '!misservicios' || commandParts[0] === '!servicios'|| commandParts[0] === '!misservidores'|| commandParts[0] === '!servidores') {
         await fetchActiveServers(userPhone, client);
+    }
+    
+    if (commandParts[0] === '!total') {
+        await getTotalSumOfContractedServices(userPhone, client);
     }
 
     if (commandParts[0] === '!vencimiento' || commandParts[0] === '!vencimientos' || commandParts[0] === '!proximosvencimientos') {
