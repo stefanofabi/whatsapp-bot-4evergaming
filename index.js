@@ -4,7 +4,7 @@ const cron = require('node-cron');
 
 // Commands
 const { fetchPendingInvoices, fetchInvoiceDetails, fetchInvoiceItems, checkDebt, markInvoicePaid } = require('./commands/invoices');
-const { fetchActiveServers, fetchUpcomingDueDates, getTotalSumOfContractedServices } = require('./commands/services');
+const { fetchActiveServers, fetchUpcomingDueDates, getTotalSumOfContractedServices, requestCancel, confirmRequestCancel } = require('./commands/services');
 const { getHelpCommands } = require('./commands/help');
 const { payWithBankTransfer, payWithCard, payWithMercadoPago, payWithUala } = require('./commands/payment_gateways');
 const { getClientDetails } = require('./commands/clients');
@@ -79,6 +79,10 @@ client.on('message_create', async (message) => {
         await getHelpCommands(userPhone, client);
     }
 
+    //
+    // Billing
+    //
+
     if (commandParts[0] === '!misfacturas' || commandParts[0] === '!facturas') {
         await fetchPendingInvoices(userPhone, client);
     }
@@ -105,12 +109,16 @@ client.on('message_create', async (message) => {
         await fetchInvoiceItems(invoiceId, userPhone, client);
     }
 
+    if (commandParts[0] === '!deuda') {
+        await checkDebt(userPhone, client);
+    }
+
+    //
+    // Services
+    //
+
     if (commandParts[0] === '!misservicios' || commandParts[0] === '!servicios'|| commandParts[0] === '!misservidores'|| commandParts[0] === '!servidores') {
         await fetchActiveServers(userPhone, client);
-    }
-    
-    if (commandParts[0] === '!total') {
-        await getTotalSumOfContractedServices(userPhone, client);
     }
 
     if (commandParts[0] === '!vencimiento' || commandParts[0] === '!vencimientos' || commandParts[0] === '!proximosvencimientos') {
@@ -122,6 +130,29 @@ client.on('message_create', async (message) => {
 
         await fetchUpcomingDueDates(days, userPhone, client);
     }
+
+    if (commandParts[0] === '!total') {
+        await getTotalSumOfContractedServices(userPhone, client);
+    }
+
+    if (commandParts[0] === '!baja') {      
+        await requestCancel(userPhone, client);
+    }
+
+    if (commandParts[0] === '!confirmarbaja' && commandParts.length === 2) {
+        const serviceId = parseInt(commandParts[1], 10);
+
+        if (isNaN(serviceId)) {
+            await message.reply('🤖 Numero de servicio invalido');
+            return;
+        }
+        
+        await confirmRequestCancel(userPhone, client);
+    }
+
+    //
+    // Payments
+    //
 
     if (commandParts[0] === '!transferencia' || commandParts[0] === '!cbu' || commandParts[0] === '!alias') {
         const invoiceId = parseInt(commandParts[1], 10);
@@ -152,9 +183,9 @@ client.on('message_create', async (message) => {
         await payWithUala(invoiceId, userPhone, client);
     }
 
-    if (commandParts[0] === '!deuda') {
-        await checkDebt(userPhone, client);
-    }
+    //
+    // Admin
+    //
 
     if (commandParts[0] === '!marcarpagada' && commandParts.length === 5) {
         if (! message.fromMe) {

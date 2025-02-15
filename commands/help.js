@@ -6,6 +6,7 @@ Para consultar por tus servicios:
 *!servicios*: Muestra el detalle de los servicios activos
 *!vencimiento <días>*: Muestra los próximos vencimientos
 *!total*: Calcula la suma total de todos los servicios contratados
+*!baja*: Solicita la baja de uno de tus servicios
 
 Para consultar temas de facturación:
 *!facturas*: Muestra tus facturas pendientes
