@@ -211,7 +211,7 @@ async function requestCancel(userPhone, client) {
     }
 }
 
-async function confirmRequestCancel(userPhone, client, serviceId, reason) {
+async function confirmRequestCancel(userPhone, client, serviceId) {
     const db = await connect('whmcs');
 
     const query = `
@@ -252,7 +252,7 @@ async function confirmRequestCancel(userPhone, client, serviceId, reason) {
             return;
         }
 
-        const cancelSuccess = await addCancelRequest(serviceId, reason);
+        const cancelSuccess = await addCancelRequest(serviceId);
 
         if (cancelSuccess) {
             await sendMessage(client, userPhone, `🤖 El servicio con ID ${serviceId} ha sido cancelado exitosamente.`);

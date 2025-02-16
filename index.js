@@ -147,7 +147,7 @@ client.on('message_create', async (message) => {
             return;
         }
         
-        await confirmRequestCancel(userPhone, client);
+        await confirmRequestCancel(userPhone, client, serviceId);
     }
 
     //
