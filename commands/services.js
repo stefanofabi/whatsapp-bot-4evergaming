@@ -252,6 +252,28 @@ async function confirmRequestCancel(userPhone, client, serviceId) {
             return;
         }
 
+        const checkCancelQuery = `
+            SELECT date, reason, type
+            FROM tblcancelrequests
+            WHERE relid = ?
+        `;
+        const [cancelResults] = await db.execute(checkCancelQuery, [serviceId]);
+
+        if (cancelResults.length > 0) {
+            const cancelRequest = cancelResults[0];
+            const cancelDate = cancelRequest.date;
+            const cancelReason = cancelRequest.reason;
+            const cancelType = cancelRequest.type;
+
+            await sendMessage(client, userPhone, 
+                `🤖 Ya existe una solicitud de cancelación para el servicio con ID *#${serviceId}*.\n\n`  +
+                `Fecha: ${formatDate(cancelDate)}\n` +
+                `Razón: ${cancelReason}\n` +
+                `Tipo de cancelación: ${cancelType}`);
+            await db.end();
+            return;
+        }
+
         const cancelSuccess = await addCancelRequest(serviceId);
 
         if (cancelSuccess) {

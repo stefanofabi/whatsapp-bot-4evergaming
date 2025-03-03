@@ -192,14 +192,12 @@ async function checkDebt(userPhone, client) {
         const { totalDebt, overdueDebt } = results[0];
         const totalDebtDiscount = Math.ceil(totalDebt * 0.90); 
 
-        const message = `
-            🤖 Te envio el estado de tu cuenta: \n
-            Deuda total pendiente: \$${totalDebt}\n
-            Deuda vencida: \$${overdueDebt}\n
-            *Total a pagar con descuento (10%):* ~\$${totalDebt}~ \$${totalDebtDiscount}\n\n
-            Alias para hacer el pago: *4evergaming*\n
-            Por favor enviar el comprobante de la transferencia 🙏
-        `;
+        const message = `🤖 Te envio el estado de tu cuenta: \n` +
+            `Deuda total pendiente: \$${totalDebt}\n` +
+            `Deuda vencida: \$${overdueDebt}\n` +
+            `*Total a pagar con descuento (10%):* ~\$${totalDebt}~ \$${totalDebtDiscount}\n\n` +
+            `Alias para hacer el pago: *4evergaming*\n` +
+            `Por favor enviar el comprobante de la transferencia 🙏`;
 
         await sendMessage(client, userPhone, message);
         console.log(`[200] Message sent to ${userPhone}`);
