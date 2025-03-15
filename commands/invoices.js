@@ -140,15 +140,18 @@ async function fetchInvoiceItems(invoiceId, userPhone, client) {
             return;
         }
 
-        const { invoiceid, description, amount, duedate } = results[0];
-        const invoiceDetailsMessage = `🤖 Los items de tu factura #${invoiceid}:` +
-            `*Descripción:* ${description}` +
-            `*Monto:* \$${amount}` +
-            `*Vencimiento:* ${formatDate(duedate)}\n`;
-        
+        let invoiceDetailsMessage = `🤖 Los items de tu factura #${invoiceId}:\n`;
+
+        results.forEach(item => {
+            const { description, amount, duedate } = item;
+            invoiceDetailsMessage += `\n*Descripción:* ${description}\n` +
+                `*Monto:* \$${amount}\n` +
+                `*Vencimiento:* ${formatDate(duedate)}\n`;
+        });
+
         await sendMessage(client, userPhone, invoiceDetailsMessage);
         console.log(`[200] Message sent to ${userPhone}`);
-        
+
     } catch (err) {
         console.error('Error fetching invoice items:', err);
     } finally {

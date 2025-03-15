@@ -5,12 +5,11 @@ const { formatDate } = require('../utils/dates');
 async function fetchAndSendMessages(client) {
     const db = await connect('whatsapp');
 
-    const dateToday = formatDate(new Date, true);
+    const dateToday = formatDate(new Date(), true);
 
     console.log(`[${dateToday}] Running scheduled task to send messages`);
 
     try {
-        // Query the "messages" table
         const [results] = await db.execute('SELECT id, phone, message FROM messages');
 
         if (results.length === 0) {
@@ -18,15 +17,22 @@ async function fetchAndSendMessages(client) {
         }
 
         for (const { id, phone, message } of results) {
-            try {
-                await client.sendMessage(phone, message);
-                console.log(`[${dateToday}] [200] Message sent to ${phone}`);
+            const phoneNumber = phone.split('@')[0];
 
-                // Delete the message from the database after sending
+            // Validate that it only contains numbers
+            if (/^\d+$/.test(phoneNumber)) {
+                try {
+                    await client.sendMessage(phone, message);
+                    console.log(`[${dateToday}] [200] Message sent to ${phone}`);
+
+                    await db.execute('DELETE FROM messages WHERE id = ?', [id]);
+                    console.log(`[${dateToday}] [200] Message deleted from database for ${phone}`);
+                } catch (error) {
+                    console.error(`[${dateToday}] [500] Error sending message to ${phone}:`, error);
+                }
+            } else {
                 await db.execute('DELETE FROM messages WHERE id = ?', [id]);
-                console.log(`[${dateToday}] [200] Message deleted from database for ${phone}`);
-            } catch (error) {
-                console.error(`[${dateToday}] [500] Error sending message to ${phone}:`, error);
+                console.log(`[${dateToday}] [400] Invalid phone number format for ${phone}. Message deleted from database.`);
             }
         }
     } catch (err) {
