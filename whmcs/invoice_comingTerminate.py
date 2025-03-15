@@ -52,7 +52,7 @@ for invoice in resultInvoices:
         firstName = client[1].split(" ")[0]
         phone = config.formatNumber(client[3])
         currency_code = client[4]
-        currency = config.CURRENCY_CODES.get(currency_code, "ARS")  # "ARS" is the default value if the code is not found
+        currency = config.CURRENCY_CODES.get(str(currency_code), "ARS")  # "ARS" is the default value if the code is not found
         payment_option = client[6]
 
         # Use the existing templates for the messages

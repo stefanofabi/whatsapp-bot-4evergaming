@@ -47,7 +47,7 @@ for invoice in resultInvoices:
         firstName = client[1].split(" ")[0]
         phone = config.formatNumber(client[3])
         currency_code = client[4]
-        currency = config.CURRENCY_CODES.get(currency_code, "ARS")  # Default to "ARS" if code not found
+        currency = config.CURRENCY_CODES.get(str(currency_code), "ARS")  # Default to "ARS" if code not found
         client_group = client[5]
         payment_option = client[6]
 
