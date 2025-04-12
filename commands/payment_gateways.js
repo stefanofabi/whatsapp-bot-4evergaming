@@ -81,8 +81,8 @@ async function payWithBankTransfer(invoiceId, userPhone, client) {
             }
         }
 
-        const totalSumDiscount = Math.ceil(totalSum * 0.90);
-        invoicesMessage += `\n *Total a pagar (10% de descuento):* ~\$${totalSum}~ \$${totalSumDiscount} ARS\n\n`;
+        const totalSumDiscount = Math.ceil(totalSum * 0.95);
+        invoicesMessage += `\n *Total a pagar (5% de descuento):* ~\$${totalSum}~ \$${totalSumDiscount} ARS\n\n`;
 
         invoicesMessage += `Realiza tu pago con los siguientes datos:\n` +
                           `*Titular:* Stefano Fabi\n` +
@@ -262,7 +262,7 @@ async function payWithUala(invoiceId, userPhone, client) {
         ON 
             tblclients.currency = tblcurrencies.id 
         WHERE 
-            tblinvoices.id = ? AND
+            (tblinvoices.id = ? OR ? IS NULL) AND
             CASE 
                 WHEN tblclients.phonenumber LIKE '+54%' THEN REPLACE(REPLACE(REPLACE(REPLACE(tblclients.phonenumber, '+', ''), '.', '9'), ' ', ''), '-', '')
                 WHEN tblclients.phonenumber LIKE '+52%' THEN REPLACE(REPLACE(REPLACE(REPLACE(tblclients.phonenumber, '+', ''), '.', '1'), ' ', ''), '-', '')
@@ -271,30 +271,62 @@ async function payWithUala(invoiceId, userPhone, client) {
     `;
 
     try {
-        const [results] = await db.execute(query, [invoiceId, userPhone.split('@')[0]]);
+        const [results] = await db.execute(query, [isNaN(invoiceId) ? null : invoiceId, isNaN(invoiceId) ? null : invoiceId, userPhone.split('@')[0]]);
 
         if (results.length === 0) {
-            await sendMessage(client, userPhone, '🤖 No existe la factura');
+            if (isNaN(invoiceId)) {
+                await sendMessage(client, userPhone, '🤖 No hay facturas pendientes por pagar');
+            } else {
+                await sendMessage(client, userPhone, '🤖 No existe la factura');
+            }
+
             await db.end();
             return;
         }
+      
+      
+      	let totalSum = 0;
+        let invoicesMessage = "";
 
-        let { id, date, duedate, total, status, currency } = results[0];
+        if (results.length === 1 && !isNaN(invoiceId)) {
+            let { id, date, duedate, total, status, currency } = results[0];
 
-        if (status !== 'Unpaid') {
-            await sendMessage(client, userPhone, '🤖 No podés pagar esta factura.\n\n Motivo: Estado de la factura ' + status);
-            await db.end();
-            return;
+            if (status === 'Unpaid') {
+                total = await convertCurrency(currency, total, "ARS");
+                total = Math.ceil(total);
+
+                totalSum += total;
+
+                invoicesMessage += '🤖 Acá está tu factura pendiente:\n\n';
+                invoicesMessage += `*Factura: #${id}*\nFecha: ${formatDate(date)}\nVencimiento: ${formatDate(duedate)}\nTotal: \$${total} ARS\n`;
+            } else {
+                await sendMessage(client, userPhone, '🤖 No podés pagar esta factura.\n\n Motivo: Estado de la factura ' + status);
+                await db.end();
+                return;
+            }
+        } else {
+            invoicesMessage = '🤖 Acá están tus facturas pendientes:\n\n';
+            for (const { id, date, duedate, total, status, currency } of results) {
+                if (status !== 'Unpaid') continue;
+
+                let convertedTotal = await convertCurrency(currency, total, "ARS");
+                convertedTotal = Math.ceil(convertedTotal);
+
+                totalSum += convertedTotal;
+
+                invoicesMessage += `*Factura: #${id}*\nFecha: ${formatDate(date)}\nVencimiento: ${formatDate(duedate)}\nMonto: \$${convertedTotal} ARS\n\n`;
+            }
         }
 
-        total = await convertCurrency(currency, total, "ARS");
+        const totalSumDiscount = Math.ceil(totalSum * 0.95);
+        invoicesMessage += `\n *Total a pagar (5% de descuento):* ~\$${totalSum}~ \$${totalSumDiscount} ARS\n\n`;
 
-        let invoicesMessage = '🤖 Acá está tu factura pendiente:\n\n';
-
-        invoicesMessage += `*Factura: #${id}*\nFecha: ${formatDate(date)}\nVencimiento: ${formatDate(duedate)}\nTotal: \$${total} ARS\n`;
+        invoicesMessage += `Abri la App de Uala en tu celular y buscanos con el usuario *4evergaming*\n` +
+                          `Por favor enviar el comprobante de la transferencia 🙏`;
 
         await sendMessage(client, userPhone, invoicesMessage);
         console.log(`[200] Message sent to ${userPhone}`);
+      
     } catch (err) {
         console.error('Error fetching invoices:', err);
     } finally {
