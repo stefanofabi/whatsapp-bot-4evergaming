@@ -164,14 +164,26 @@ async function checkDebt(userPhone, client) {
 
     const query = `
         SELECT 
-            SUM(tblinvoices.total) AS totalDebt, 
-            SUM(CASE WHEN tblinvoices.duedate < CURDATE() THEN tblinvoices.total ELSE 0 END) AS overdueDebt
+            SUM(IFNULL(tblinvoices.total, 0) - IFNULL(pagos.total_pagado, 0)) AS totalDebt,
+            SUM(
+                CASE 
+                    WHEN tblinvoices.duedate < CURDATE() THEN IFNULL(tblinvoices.total, 0) - IFNULL(pagos.total_pagado, 0) 
+                    ELSE 0 
+                END
+            ) AS overdueDebt
         FROM 
-            tblinvoices 
+            tblinvoices
         INNER JOIN 
-            tblclients 
-        ON 
-            tblinvoices.userid = tblclients.id 
+            tblclients ON tblinvoices.userid = tblclients.id
+        LEFT JOIN (
+            SELECT 
+                invoiceid, 
+                SUM(amountin) AS total_pagado
+            FROM 
+                tblaccounts
+            GROUP BY 
+                invoiceid
+        ) AS pagos ON pagos.invoiceid = tblinvoices.id
         WHERE 
             tblinvoices.status = "Unpaid" AND 
             CASE 
@@ -186,19 +198,19 @@ async function checkDebt(userPhone, client) {
     try {
         const [results] = await db.execute(query, [userPhone.split('@')[0]]);
 
-        if (results.length === 0) {
+        if (results.length === 0 || results[0].totalDebt <= 0) {
             const noDebtMessage = `🤖 No tenés deudas pendientes. Gracias por estar al día! 😊`;
             await sendMessage(client, userPhone, noDebtMessage);
             return;
         }
 
         const { totalDebt, overdueDebt } = results[0];
-        const totalDebtDiscount = Math.ceil(totalDebt * 0.90); 
+        const totalDebtDiscount = Math.ceil(totalDebt * 0.95); 
 
         const message = `🤖 Te envio el estado de tu cuenta: \n` +
             `Deuda total pendiente: \$${totalDebt}\n` +
             `Deuda vencida: \$${overdueDebt}\n` +
-            `*Total a pagar con descuento (10%):* ~\$${totalDebt}~ \$${totalDebtDiscount}\n\n` +
+            `*Total a pagar con descuento (5%):* ~\$${totalDebt}~ \$${totalDebtDiscount}\n\n` +
             `Alias para hacer el pago: *4evergaming*\n` +
             `Por favor enviar el comprobante de la transferencia 🙏`;
 
