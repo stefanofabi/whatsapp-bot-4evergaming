@@ -8,6 +8,7 @@ const { fetchActiveServers, fetchUpcomingDueDates, getTotalSumOfContractedServic
 const { getHelpCommands } = require('./commands/help');
 const { payWithBankTransfer, payWithCard, payWithMercadoPago, payWithUala } = require('./commands/payment_gateways');
 const { getClientDetails } = require('./commands/clients');
+const { activeAllSensors } = require('./commands/sensors');
 
 // Crons
 const fetchAndSendMessages = require('./crons/message_sender');
@@ -190,6 +191,8 @@ client.on('message_create', async (message) => {
     if (commandParts[0] === '!marcarpagada' && commandParts.length === 5) {
         if (! message.fromMe) {
             await message.reply('🤖 Comando disponible solo para acceso administrativo');
+
+            return;
         }
 
         const invoiceId = parseInt(commandParts[1], 10);
@@ -214,6 +217,16 @@ client.on('message_create', async (message) => {
 
     if (commandParts[0] === '!cliente') {
         await getClientDetails(userPhone, client);
+    }
+
+    if (commandParts[0] === '!activarsensores') {
+        if (! message.fromMe) {
+            await message.reply('🤖 Comando disponible solo para acceso administrativo');
+
+            return;
+        }
+
+        await activeAllSensors(userPhone, client);
     }
 
 });

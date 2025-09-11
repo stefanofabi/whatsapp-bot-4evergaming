@@ -17,7 +17,13 @@
             "user": "",
             "password": "",
             "database": ""
-        }
+        },
+        "web": {
+            "host": "",
+            "user": "",
+            "password": "",
+            "database": ""
+        },
     },
     "payment_gateways": {
         "mercadopago": {

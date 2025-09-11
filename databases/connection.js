@@ -39,6 +39,17 @@ async function connect(database) {
 
                 break;
             }
+
+            case 'web': {
+                connection = await mysql.createConnection({
+                    host: config.databases.web.host,
+                    user: config.databases.web.user,
+                    password: config.databases.web.password,
+                    database: config.databases.web.database
+                });
+
+                break;
+            }
         }
 
         return connection;
