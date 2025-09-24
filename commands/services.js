@@ -100,7 +100,7 @@ async function fetchUpcomingDueDates(days, userPhone, client) {
         }
 
         let serversMessage = '🤖 Los servicios próximos a vencer son:\n\n';
-        results.forEach(({ productName, type, domain, amount, billingCycle, nextduedate }) => {
+        results.forEach(({ productName, type, domain, amount, billingCycle, nextduedate, code }) => {
             const domainOrIp = type === 'hostingaccount' ? 'Dominio' : (productName.includes('Dominio') ? 'Dominio' : 'IP');
 
             serversMessage += `*Producto:* ${productName}\n*${domainOrIp}:* ${domain}\n*Precio:*  \$${amount} ${code}\n*Facturación:* ${billingCycle}\n*Fecha de Vencimiento:* ${formatDate(nextduedate)}\n\n`;

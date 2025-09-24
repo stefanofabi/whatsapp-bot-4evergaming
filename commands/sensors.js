@@ -36,11 +36,15 @@ async function activeAllSensors(userPhone, client) {
                     connectTimeout: 10000
                 });
 
-                const [result] = await nodeConn.execute('UPDATE sensors SET active = 1');
+                // Solo activar sensores que están desactivados
+                const [result] = await nodeConn.execute('UPDATE sensors SET active = 1 WHERE active = 0');
 
                 const updated = result?.affectedRows || 0;
-                totalUpdated += updated;
-                perNodeResults.push({ nodeName, updated, ok: true });
+
+                if (updated > 0) {
+                    totalUpdated += updated;
+                    perNodeResults.push({ nodeName, updated, ok: true });
+                }
 
                 await nodeConn.end();
             } catch (errNode) {
@@ -51,13 +55,28 @@ async function activeAllSensors(userPhone, client) {
             }
         }
 
-        let message = `🤖 Actualización completada.\nTotal sensores activados: ${totalUpdated}\n\nDetalle por nodo:\n`;
-        for (const r of perNodeResults) {
-            if (r.ok) {
+        // Generar mensaje de respuesta
+        let message = `🤖 Actualización completada.\nTotal sensores activados: ${totalUpdated}`;
+
+        const successfulNodes = perNodeResults.filter(r => r.ok);
+        const failedNodes = perNodeResults.filter(r => !r.ok);
+
+        if (successfulNodes.length > 0) {
+            message += `\n\n🟢 Nodos con sensores activados:\n`;
+            for (const r of successfulNodes) {
                 message += `• ${r.nodeName}: ${r.updated} sensores activados\n`;
-            } else {
+            }
+        }
+
+        if (failedNodes.length > 0) {
+            message += `\n🔴 Errores en los siguientes nodos:\n`;
+            for (const r of failedNodes) {
                 message += `• ${r.nodeName}: error -> ${r.error}\n`;
             }
+        }
+
+        if (totalUpdated === 0 && failedNodes.length === 0) {
+            message += `\n\n⚠️ No se activó ningún sensor porque todos ya estaban activos.`;
         }
 
         await sendMessage(client, userPhone, message);
