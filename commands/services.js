@@ -95,16 +95,24 @@ async function fetchUpcomingDueDates(days, userPhone, client) {
         if (results.length === 0) {
             await sendMessage(client, userPhone, '🤖 No tenes vencimientos en los próximos ' + days + " días");
             await db.end();
-            
             return;
         }
 
         let serversMessage = '🤖 Los servicios próximos a vencer son:\n\n';
+        let totalAmount = 0;
+        let currencyCode = '';
+
         results.forEach(({ productName, type, domain, amount, billingCycle, nextduedate, code }) => {
             const domainOrIp = type === 'hostingaccount' ? 'Dominio' : (productName.includes('Dominio') ? 'Dominio' : 'IP');
 
-            serversMessage += `*Producto:* ${productName}\n*${domainOrIp}:* ${domain}\n*Precio:*  \$${amount} ${code}\n*Facturación:* ${billingCycle}\n*Fecha de Vencimiento:* ${formatDate(nextduedate)}\n\n`;
+            serversMessage += `*Producto:* ${productName}\n*${domainOrIp}:* ${domain}\n*Precio:* \$${amount} ${code}\n*Facturación:* ${billingCycle}\n*Fecha de Vencimiento:* ${formatDate(nextduedate)}\n\n`;
+
+            totalAmount += parseFloat(amount);
+            currencyCode = code; // guardamos el código de moneda (si es el mismo para todos)
         });
+
+        // Agregamos el total al final
+        serversMessage += `*💰 Total a vencer:* \$${totalAmount.toFixed(2)} ${currencyCode}`;
 
         await sendMessage(client, userPhone, serversMessage);
         console.log(`[200] Message sent to ${userPhone}`);

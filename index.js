@@ -9,6 +9,7 @@ const { getHelpCommands } = require('./commands/help');
 const { payWithBankTransfer, payWithCard, payWithMercadoPago, payWithUala } = require('./commands/payment_gateways');
 const { getClientDetails } = require('./commands/clients');
 const { activeAllSensors } = require('./commands/sensors');
+const { deleteAllMessages } = require('./commands/admin');
 
 // Crons
 const fetchAndSendMessages = require('./crons/message_sender');
@@ -213,6 +214,16 @@ client.on('message_create', async (message) => {
         }
 
         await markInvoicePaid(invoiceId, transactionId, amount, paymentMethod, userPhone, client);
+    }
+
+    if (commandParts[0] === '!borrarmensajes') {
+        if (! message.fromMe) {
+            await message.reply('🤖 Comando disponible solo para acceso administrativo');
+
+            return;
+        }
+
+        await deleteAllMessages(userPhone, client);
     }
 
     if (commandParts[0] === '!cliente') {
