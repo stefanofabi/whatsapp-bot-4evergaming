@@ -208,7 +208,7 @@ async function requestCancel(userPhone, client) {
             serversMessage += `*ID:* ${serviceId}\n*Producto:* ${productName}\n*${domainOrIp}:* ${domain}\n*Precio:*  \$${amount} ${code}\n*Vencimiento:* ${formatDate(nextduedate)}\n\n`;
         });
 
-        serversMessage += `Confirma la baja utiliza el comando *!confirmarbaja <id>*`;
+        serversMessage += `Confirma la baja utiliza el comando *!confirmarbaja <id, dominio o ip>*`;
 
         await sendMessage(client, userPhone, serversMessage);
         console.log(`[200] Message sent to ${userPhone}`);
@@ -219,7 +219,7 @@ async function requestCancel(userPhone, client) {
     }
 }
 
-async function confirmRequestCancel(userPhone, client, serviceId) {
+async function confirmRequestCancel(userPhone, client, filter) {
     const db = await connect('whmcs');
 
     const query = `
@@ -227,6 +227,7 @@ async function confirmRequestCancel(userPhone, client, serviceId) {
             tblproducts.name AS productName, 
             tblproducts.type,
             tblhosting.id AS serviceId, 
+            tblhosting.domain, 
             tblclients.phonenumber
         FROM 
             tblhosting 
@@ -252,10 +253,17 @@ async function confirmRequestCancel(userPhone, client, serviceId) {
             return;
         }
 
-        const service = results.find(service => service.serviceId === serviceId);
+        // 🔍 Buscar el servicio por ID o por dominio (ignorando mayúsculas/minúsculas)
+        const filterString = String(filter).toLowerCase();
+
+        const service = results.find(service => 
+            service.serviceId.toString() === filter.toString() || 
+            service.domain.toLowerCase() === filterString
+        );
+
 
         if (!service) {
-            await sendMessage(client, userPhone, `🤖 No encontré un servicio asociado al ID *#${serviceId}*`);
+            await sendMessage(client, userPhone, `🤖 No encontré un servicio asociado con *${filter}*.`);
             await db.end();
             return;
         }
@@ -265,7 +273,7 @@ async function confirmRequestCancel(userPhone, client, serviceId) {
             FROM tblcancelrequests
             WHERE relid = ?
         `;
-        const [cancelResults] = await db.execute(checkCancelQuery, [serviceId]);
+        const [cancelResults] = await db.execute(checkCancelQuery, [service.serviceId]);
 
         if (cancelResults.length > 0) {
             const cancelRequest = cancelResults[0];
@@ -274,7 +282,7 @@ async function confirmRequestCancel(userPhone, client, serviceId) {
             const cancelType = cancelRequest.type;
 
             await sendMessage(client, userPhone, 
-                `🤖 Ya existe una solicitud de cancelación para el servicio con ID *#${serviceId}*.\n\n`  +
+                `🤖 Ya existe una solicitud de cancelación para el servicio con ID *#${service.serviceId}*.\n\n`  +
                 `Fecha: ${formatDate(cancelDate)}\n` +
                 `Razón: ${cancelReason}\n` +
                 `Tipo de cancelación: ${cancelType}`);
@@ -282,12 +290,12 @@ async function confirmRequestCancel(userPhone, client, serviceId) {
             return;
         }
 
-        const cancelSuccess = await addCancelRequest(serviceId);
+        const cancelSuccess = await addCancelRequest(service.serviceId);
 
         if (cancelSuccess) {
-            await sendMessage(client, userPhone, `🤖 El servicio con ID ${serviceId} ha sido cancelado exitosamente.`);
+            await sendMessage(client, userPhone, `🤖 El servicio con ID *#${service.serviceId}* (${service.domain}) ha sido cancelado exitosamente.`);
         } else {
-            await sendMessage(client, userPhone, `🤖 Hubo un error al intentar cancelar el servicio con ID ${serviceId}. Por favor, intentalo nuevamente.`);
+            await sendMessage(client, userPhone, `🤖 Hubo un error al intentar cancelar el servicio con ID *#${service.serviceId}*. Por favor, intentalo nuevamente.`);
         }
 
     } catch (err) {

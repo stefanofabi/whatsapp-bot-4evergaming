@@ -142,14 +142,12 @@ client.on('message_create', async (message) => {
     }
 
     if (commandParts[0] === '!confirmarbaja' && commandParts.length === 2) {
-        const serviceId = parseInt(commandParts[1], 10);
+        const filter = commandParts[1].trim();
 
-        if (isNaN(serviceId)) {
-            await message.reply('🤖 Numero de servicio invalido');
-            return;
-        }
-        
-        await confirmRequestCancel(userPhone, client, serviceId);
+        // Si es un número, parseamos; si no, dejamos el string
+        const parsedFilter = /^\d+$/.test(filter) ? parseInt(filter, 10) : filter;
+
+        await confirmRequestCancel(userPhone, client, parsedFilter);
     }
 
     //
