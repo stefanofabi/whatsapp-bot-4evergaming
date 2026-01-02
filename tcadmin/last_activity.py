@@ -35,17 +35,19 @@ for user in resultUsers:
     phone = user[7].replace('-', '').replace(' ', '')
 
     if (user[6] == "AR"): 
-        phone = "549" + phone
+        phone = "549" + phone + "@c.us"
     elif (user[6] == "CL"): 
-        phone = "56" + phone
+        phone = "56" + phone + "@c.us"
     elif (user[6] == "UY"): 
-        phone = "598" + phone
+        phone = "598" + phone + "@c.us"
     elif (user[6] == "PE"): 
-        phone = "51" + phone
+        phone = "51" + phone + "@c.us"
     elif (user[6] == "EC"): 
-        phone = "593" + phone
+        phone = "593" + phone + "@c.us"
     else:
         continue
+
+    phone = config.get_forwarded_number(phone)
 
     tasks = ""
     first_task = True
@@ -65,7 +67,7 @@ for user in resultUsers:
 
     # Insert the message into the database
     insert_sql = "INSERT INTO messages (phone, message) VALUES (%s, %s)"
-    whatsapp_access.execute(insert_sql, (phone + "@c.us", messageToSend))
+    whatsapp_access.execute(insert_sql, (phone, messageToSend))
     config.db_whatsapp.commit()  # Commit the transaction
 
     print("Message saved in the database for user #" + str(user[0]))

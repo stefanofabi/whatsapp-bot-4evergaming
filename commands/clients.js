@@ -1,7 +1,7 @@
 const { connect } = require('../databases/connection');
 const { sendMessage } = require('../utils/messages');
 
-async function getClientDetails(userPhone, client) {
+async function getClientDetails(chatId, userPhone, client) {
     const db = await connect('whmcs');
 
     const query = `
@@ -24,7 +24,7 @@ async function getClientDetails(userPhone, client) {
         const [results] = await db.execute(query, [userPhone.split('@')[0]]);
 
         if (results.length === 0) {
-            await sendMessage(client, userPhone, '🤖 No se encontraron datos para este teléfono');
+            await sendMessage(client, chatId, '🤖 No se encontraron datos para este teléfono');
             await db.end();
             return;
         }
@@ -36,7 +36,7 @@ async function getClientDetails(userPhone, client) {
         clientMessage += `*Nombre:* ${firstname} ${lastname}\n`;
         clientMessage += `*Email:* ${email}\n`;
 
-        await sendMessage(client, userPhone, clientMessage);
+        await sendMessage(client, chatId, clientMessage);
 
     } catch (err) {
         console.error('Error fetching client details:', err);

@@ -4,7 +4,8 @@ const { formatDate } = require('../utils/dates');
 const { addCancelRequest } = require('../utils/whmcs');
 
 // Function to fetch active servers
-async function fetchActiveServers(userPhone, client) {
+async function fetchActiveServers(chatId, userPhone, client) 
+{
     const db = await connect('whmcs');
 
     const query = `
@@ -36,7 +37,7 @@ async function fetchActiveServers(userPhone, client) {
         const [results] = await db.execute(query, [userPhone.split('@')[0]]);
 
         if (results.length === 0) {
-            await sendMessage(client, userPhone, '🤖 No tenes servicios activos');
+            await sendMessage(client, chatId, '🤖 No tenes servicios activos');
             await db.end();
             return;
         }
@@ -49,8 +50,8 @@ async function fetchActiveServers(userPhone, client) {
             serversMessage += `*Producto:* ${productName}\n*${domainOrIp}:* ${domain}\n*Precio:*  \$${amount} ${code}\n*Vencimiento:* ${formatDate(nextduedate)}\n\n`;
         });
 
-        await sendMessage(client, userPhone, serversMessage);
-        console.log(`[200] Message sent to ${userPhone}`);
+        await sendMessage(client, chatId, serversMessage);
+        console.log(`[200] Message sent to ${chatId}`);
     } catch (err) {
         console.error('Error fetching active servers:', err);
     } finally {
@@ -59,7 +60,7 @@ async function fetchActiveServers(userPhone, client) {
 }
 
 // Function to fetch upcoming due dates
-async function fetchUpcomingDueDates(days, userPhone, client) {
+async function fetchUpcomingDueDates(days, chatId, userPhone, client) {
     const db = await connect('whmcs');
 
     const query = `
@@ -93,7 +94,7 @@ async function fetchUpcomingDueDates(days, userPhone, client) {
         const [results] = await db.execute(query, [days, userPhone.split('@')[0]]);
 
         if (results.length === 0) {
-            await sendMessage(client, userPhone, '🤖 No tenes vencimientos en los próximos ' + days + " días");
+            await sendMessage(client, chatId, '🤖 No tenes vencimientos en los próximos ' + days + " días");
             await db.end();
             return;
         }
@@ -114,8 +115,8 @@ async function fetchUpcomingDueDates(days, userPhone, client) {
         // Agregamos el total al final
         serversMessage += `*💰 Total a vencer:* \$${totalAmount.toFixed(2)} ${currencyCode}`;
 
-        await sendMessage(client, userPhone, serversMessage);
-        console.log(`[200] Message sent to ${userPhone}`);
+        await sendMessage(client, chatId, serversMessage);
+        console.log(`[200] Message sent to ${chatId}`);
     } catch (err) {
         console.error('Error fetching upcoming due dates:', err);
     } finally {
@@ -123,7 +124,7 @@ async function fetchUpcomingDueDates(days, userPhone, client) {
     }
 }
 
-async function getTotalSumOfContractedServices(userPhone, client) {
+async function getTotalSumOfContractedServices(chatId, userPhone, client) {
     const db = await connect('whmcs');
 
     const query = `
@@ -146,15 +147,15 @@ async function getTotalSumOfContractedServices(userPhone, client) {
         const [results] = await db.execute(query, [userPhone.split('@')[0]]);
 
         if (results.length === 0 || results[0].amount === null) {
-            await sendMessage(client, userPhone, '🤖 No tenés servicios activos o suspendidos');
-            console.log(`[200] No contracted services found for ${userPhone}`);
+            await sendMessage(client, chatId, '🤖 No tenés servicios activos o suspendidos');
+            console.log(`[200] No contracted services found for ${chatId}`);
             await db.end();
             return;
         }
 
         const totalAmount = results[0].amount;
-        await sendMessage(client, userPhone, `🤖 El total de tus servicios contratados es: \$${totalAmount}`);
-        console.log(`[200] Total sum sent to ${userPhone}: \$${totalAmount}`);
+        await sendMessage(client, chatId, `🤖 El total de tus servicios contratados es: \$${totalAmount}`);
+        console.log(`[200] Total sum sent to ${chatId}: \$${totalAmount}`);
     } catch (err) {
         console.error('Error fetching total sum of contracted services:', err);
     } finally {
@@ -162,7 +163,7 @@ async function getTotalSumOfContractedServices(userPhone, client) {
     }
 }
 
-async function requestCancel(userPhone, client) {
+async function requestCancel(chatId, userPhone, client) {
     const db = await connect('whmcs');
 
     const query = `
@@ -195,7 +196,7 @@ async function requestCancel(userPhone, client) {
         const [results] = await db.execute(query, [userPhone.split('@')[0]]);
 
         if (results.length === 0) {
-            await sendMessage(client, userPhone, '🤖 No tenes servicios que puedas cancelar');
+            await sendMessage(client, chatId, '🤖 No tenes servicios que puedas cancelar');
             await db.end();
             return;
         }
@@ -210,8 +211,8 @@ async function requestCancel(userPhone, client) {
 
         serversMessage += `Confirma la baja utiliza el comando *!confirmarbaja <id, dominio o ip>*`;
 
-        await sendMessage(client, userPhone, serversMessage);
-        console.log(`[200] Message sent to ${userPhone}`);
+        await sendMessage(client, chatId, serversMessage);
+        console.log(`[200] Message sent to ${chatId}`);
     } catch (err) {
         console.error('Error fetching servers to cancel:', err);
     } finally {
@@ -219,7 +220,7 @@ async function requestCancel(userPhone, client) {
     }
 }
 
-async function confirmRequestCancel(userPhone, client, filter) {
+async function confirmRequestCancel(serviceId, chatId, userPhone, client) {
     const db = await connect('whmcs');
 
     const query = `
@@ -248,22 +249,22 @@ async function confirmRequestCancel(userPhone, client, filter) {
         const [results] = await db.execute(query, [userPhone.split('@')[0]]);
 
         if (results.length === 0) {
-            await sendMessage(client, userPhone, '🤖 No tenes servicios activos o suspendidos que puedas cancelar');
+            await sendMessage(client, chatId, '🤖 No tenes servicios activos o suspendidos que puedas cancelar');
             await db.end();
             return;
         }
 
         // 🔍 Buscar el servicio por ID o por dominio (ignorando mayúsculas/minúsculas)
-        const filterString = String(filter).toLowerCase();
+        const filterString = String(serviceId).toLowerCase();
 
         const service = results.find(service => 
-            service.serviceId.toString() === filter.toString() || 
+            service.serviceId.toString() === serviceId.toString() || 
             service.domain.toLowerCase() === filterString
         );
 
 
         if (!service) {
-            await sendMessage(client, userPhone, `🤖 No encontré un servicio asociado con *${filter}*.`);
+            await sendMessage(client, chatId, `🤖 No encontré un servicio asociado con *${serviceId}*.`);
             await db.end();
             return;
         }
@@ -281,7 +282,7 @@ async function confirmRequestCancel(userPhone, client, filter) {
             const cancelReason = cancelRequest.reason;
             const cancelType = cancelRequest.type;
 
-            await sendMessage(client, userPhone, 
+            await sendMessage(client, chatId, 
                 `🤖 Ya existe una solicitud de cancelación para el servicio con ID *#${service.serviceId}*.\n\n`  +
                 `Fecha: ${formatDate(cancelDate)}\n` +
                 `Razón: ${cancelReason}\n` +
@@ -293,14 +294,14 @@ async function confirmRequestCancel(userPhone, client, filter) {
         const cancelSuccess = await addCancelRequest(service.serviceId);
 
         if (cancelSuccess) {
-            await sendMessage(client, userPhone, `🤖 El servicio con ID *#${service.serviceId}* (${service.domain}) ha sido cancelado exitosamente.`);
+            await sendMessage(client, chatId, `🤖 El servicio con ID *#${service.serviceId}* (${service.domain}) ha sido cancelado exitosamente.`);
         } else {
-            await sendMessage(client, userPhone, `🤖 Hubo un error al intentar cancelar el servicio con ID *#${service.serviceId}*. Por favor, intentalo nuevamente.`);
+            await sendMessage(client, chatId, `🤖 Hubo un error al intentar cancelar el servicio con ID *#${service.serviceId}*. Por favor, intentalo nuevamente.`);
         }
 
     } catch (err) {
         console.error('Error confirming cancelation request:', err);
-        await sendMessage(client, userPhone, '🤖 Ocurrió un error al procesar tu solicitud de cancelación.');
+        await sendMessage(client, chatId, '🤖 Ocurrió un error al procesar tu solicitud de cancelación.');
     } finally {
         await db.end();
     }

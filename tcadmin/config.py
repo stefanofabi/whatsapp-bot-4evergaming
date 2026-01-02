@@ -66,3 +66,16 @@ try:
 except mysql.connector.Error as err:
     print(f"Error: {err}")
     exit("The application will close.")
+
+def get_forwarded_number(phone):
+
+    cursor = db_whatsapp.cursor(buffered=True)
+    cursor.execute(
+        "SELECT phone FROM forwarders WHERE forward LIKE %s LIMIT 1",
+        (f"{phone}%",)
+    )
+
+    result = cursor.fetchone()
+    cursor.close() 
+
+    return result[0] if result else phone

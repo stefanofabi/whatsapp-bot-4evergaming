@@ -41,14 +41,14 @@ for order in resultOrders:
     for client in resultClients:
         clientId = client[0]
         firstName = client[1].split(" ")[0]
-        phone = config.formatNumber(client[3])
+        phone = config.get_forwarded_number(config.formatNumber(client[3]))
 
         # Prepare the message to send
         messageToSend = template_message.order_pending.format(firstName=firstName)
 
         # Insert the message into the `messages` table in the WhatsApp database
         insert_sql = "INSERT INTO messages (phone, message) VALUES (%s, %s)"
-        whatsapp_access.execute(insert_sql, (phone + "@c.us", messageToSend))
+        whatsapp_access.execute(insert_sql, (phone, messageToSend))
         config.db_whatsapp.commit()  # Commit the transaction
 
         print("Message saved in the WhatsApp database for user #" + str(clientId))

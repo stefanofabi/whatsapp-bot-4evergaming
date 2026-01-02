@@ -45,7 +45,7 @@ for invoice in resultInvoices:
     for client in resultClients:
         clientId = client[0]
         firstName = client[1].split(" ")[0]
-        phone = config.formatNumber(client[3])
+        phone = config.get_forwarded_number(config.formatNumber(client[3]))
         currency_code = client[4]
         currency = config.CURRENCY_CODES.get(str(currency_code), "ARS")  # Default to "ARS" if code not found
         client_group = client[5]
@@ -62,7 +62,7 @@ for invoice in resultInvoices:
 
         # Insert the message into the `messages` table in the WhatsApp database
         insert_sql = "INSERT INTO messages (phone, message) VALUES (%s, %s)"
-        whatsapp_access.execute(insert_sql, (phone + "@c.us", messageToSend))
+        whatsapp_access.execute(insert_sql, (phone, messageToSend))
         config.db_whatsapp.commit()  # Commit the transaction
 
         print("Message saved in the WhatsApp database for user #" + str(clientId))

@@ -31,7 +31,7 @@ whatsapp_access = config.db_whatsapp.cursor()
 for client in clients:   
     firstName = client[4].split(" ")[0] 
     email = client[1]                    
-    phone = config.formatNumber(client[6])
+    phone = config.get_forwarded_number(config.formatNumber(client[6]))
     lastlogin = client[7]                 
     ip = client[2]                      
 
@@ -40,7 +40,7 @@ for client in clients:
 
     # Insert the message into the `messages` table in the second database
     insert_sql = "INSERT INTO messages (phone, message) VALUES (%s, %s)"
-    whatsapp_access.execute(insert_sql, (phone + "@c.us", messageToSend))
+    whatsapp_access.execute(insert_sql, (phone, messageToSend))
     config.db_whatsapp.commit()  # Commit the transaction
 
     print("Message saved in the WhatsApp database for user #" + str(client[0]))

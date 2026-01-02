@@ -31,17 +31,19 @@ for x in clients:
     phone = x[7].replace('.', '9').replace('-', '').replace(' ', '')
     
     if (x[6] == "AR"): 
-        phone = "549" + phone
+        phone = "549" + phone + "@c.us"
     elif (x[6] == "CL"): 
-        phone = "56" + phone
+        phone = "56" + phone + "@c.us"
     elif (x[6] == "UY"): 
-        phone = "598" + phone
+        phone = "598" + phone + "@c.us"
     elif (x[6] == "PE"): 
-        phone = "51" + phone
+        phone = "51" + phone + "@c.us"
     elif (x[6] == "EC"): 
-        phone = "593" + phone
+        phone = "593" + phone + "@c.us"
     else:
         continue
+
+    phone = config.get_forwarded_number(phone)
     
     lastLogin = x[2]
     ip = x[3]
@@ -51,7 +53,7 @@ for x in clients:
 
     # Insert the message into the WhatsApp database
     insert_sql = "INSERT INTO messages (phone, message) VALUES (%s, %s)"
-    whatsapp_access.execute(insert_sql, (phone + "@c.us", messageToSend))
+    whatsapp_access.execute(insert_sql, (phone, messageToSend))
     config.db_whatsapp.commit()  # Commit the transaction
 
     print("Message saved in the WhatsApp database for user #" + str(x[0])) 

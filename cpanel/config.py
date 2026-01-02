@@ -67,19 +67,6 @@ except mysql.connector.Error as err:
     print(f"Error: {err}")
     exit("The application will close.")
 
-# Constants
-GRUPO_DEBITO_AUTOMATICO = 1
-
-CURRENCY_CODES = {
-    "1": "USD",
-    "2": "ARS",
-    "3": "CLP",
-    "4": "URU",
-    "5": "BRL",
-    "6": "PYG",
-    "7": "EUR",
-}
-
 def formatNumber(number):
     if number.startswith("+54"):
         formatted_number = number.replace('+', '').replace('.', '9').replace('-', '').replace(' ', '')
@@ -90,20 +77,6 @@ def formatNumber(number):
     else:
         formatted_number = number.replace('+', '').replace('.', '').replace('-', '').replace(' ', '')
     
-    return formatted_number + "@c.us"
-
-def get_forwarded_number(phone):
-
-    cursor = db_whatsapp.cursor(buffered=True)
-    cursor.execute(
-        "SELECT phone FROM forwarders WHERE forward LIKE %s LIMIT 1",
-        (f"{phone}%",)
-    )
-
-    result = cursor.fetchone()
-    cursor.close() 
-
-    return result[0] if result else phone
-
+    return formatted_number
 
 

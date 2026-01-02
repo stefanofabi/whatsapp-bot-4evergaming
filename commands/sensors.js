@@ -2,7 +2,7 @@ const { connect } = require('../databases/connection');
 const { sendMessage } = require('../utils/messages');
 const mysql = require('mysql2/promise');
 
-async function activeAllSensors(userPhone, client) {
+async function activeAllSensors(chatId, client) {
     const webDb = await connect('web');
 
     try {
@@ -11,7 +11,7 @@ async function activeAllSensors(userPhone, client) {
         );
 
         if (!nodes || nodes.length === 0) {
-            await sendMessage(client, userPhone, '🤖 No se encontraron nodos configurados.');
+            await sendMessage(client, chatId, '🤖 No se encontraron nodos configurados.');
             await webDb.end();
             return;
         }
@@ -79,11 +79,11 @@ async function activeAllSensors(userPhone, client) {
             message += `\n\n⚠️ No se activó ningún sensor porque todos ya estaban activos.`;
         }
 
-        await sendMessage(client, userPhone, message);
+        await sendMessage(client, chatId, message);
         console.log(`[200] Sensores activados: ${totalUpdated}`, perNodeResults);
     } catch (err) {
         console.error('Error accediendo a tabla nodes o procesando nodos:', err);
-        await sendMessage(client, userPhone, '🤖 Ocurrió un error al intentar activar los sensores en los nodos.');
+        await sendMessage(client, chatId, '🤖 Ocurrió un error al intentar activar los sensores en los nodos.');
     } finally {
         await webDb.end();
     }

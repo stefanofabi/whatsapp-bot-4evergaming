@@ -3,7 +3,7 @@ const { addTransaction } = require('../utils/whmcs');
 const { sendMessage } = require('../utils/messages');
 const { formatDate } = require('../utils/dates'); // Incluimos el archivo dates.js
 
-async function fetchPendingInvoices(userPhone, client) {
+async function fetchPendingInvoices(chatId, userPhone, client) {
     const db = await connect('whmcs');
 
     const query = `
@@ -32,7 +32,7 @@ async function fetchPendingInvoices(userPhone, client) {
         const [results] = await db.execute(query, ["Unpaid", userPhone.split('@')[0]]);
 
         if (results.length === 0) {
-            await sendMessage(client, userPhone, '🤖 No hay facturas pendientes');
+            await sendMessage(client, chatId, '🤖 No hay facturas pendientes');
             await db.end();
             return;
         }
@@ -42,8 +42,8 @@ async function fetchPendingInvoices(userPhone, client) {
             invoicesMessage += `Factura: #${id}\nFecha: ${formatDate(date)}\nVencimiento: ${formatDate(duedate)}\nTotal: \$${total}\n\n`;
         });
 
-        await sendMessage(client, userPhone, invoicesMessage);
-        console.log(`[200] Message sent to  ${userPhone}`);
+        await sendMessage(client, chatId, invoicesMessage);
+        console.log(`[200] Message sent to  ${chatId}`);
     } catch (err) {
         console.error('Error fetching invoices:', err);
     } finally {
@@ -51,7 +51,7 @@ async function fetchPendingInvoices(userPhone, client) {
     }
 }
 
-async function fetchInvoiceDetails(invoiceId, userPhone, client) {
+async function fetchInvoiceDetails(invoiceId, chatId, userPhone, client) {
     const db = await connect('whmcs');
     
     const query = `
@@ -83,7 +83,7 @@ async function fetchInvoiceDetails(invoiceId, userPhone, client) {
         const [results] = await db.execute(query, [invoiceId, userPhone.split('@')[0]]);
 
         if (results.length === 0) {
-            await sendMessage(client, userPhone, `🤖 No se encontró la factura #${invoiceId}`);
+            await sendMessage(client, chatId, `🤖 No se encontró la factura #${invoiceId}`);
             await db.end();
             return;
         }
@@ -98,8 +98,8 @@ async function fetchInvoiceDetails(invoiceId, userPhone, client) {
             *Método de pago:* ${paymentmethod}
         `;
 
-        await sendMessage(client, userPhone, invoiceDetailsMessage);
-        console.log(`[200] Message sent to  ${userPhone}`);
+        await sendMessage(client, chatId, invoiceDetailsMessage);
+        console.log(`[200] Message sent to  ${chatId}`);
     } catch (err) {
         console.error('Error fetching invoice details:', err);
     } finally {
@@ -107,7 +107,7 @@ async function fetchInvoiceDetails(invoiceId, userPhone, client) {
     }
 }
 
-async function fetchInvoiceItems(invoiceId, userPhone, client) {
+async function fetchInvoiceItems(invoiceId, chatId, userPhone, client) {
     const db = await connect('whmcs');
     
     const query = `
@@ -135,7 +135,7 @@ async function fetchInvoiceItems(invoiceId, userPhone, client) {
         const [results] = await db.execute(query, [invoiceId, userPhone.split('@')[0]]);
 
         if (results.length === 0) {
-            await sendMessage(client, userPhone, `🤖 No se encontró la factura #${invoiceId}`);
+            await sendMessage(client, chatId, `🤖 No se encontró la factura #${invoiceId}`);
             await db.end();
             return;
         }
@@ -149,8 +149,8 @@ async function fetchInvoiceItems(invoiceId, userPhone, client) {
                 `*Vencimiento:* ${formatDate(duedate)}\n`;
         });
 
-        await sendMessage(client, userPhone, invoiceDetailsMessage);
-        console.log(`[200] Message sent to ${userPhone}`);
+        await sendMessage(client, chatId, invoiceDetailsMessage);
+        console.log(`[200] Message sent to ${chatId}`);
 
     } catch (err) {
         console.error('Error fetching invoice items:', err);
@@ -159,7 +159,7 @@ async function fetchInvoiceItems(invoiceId, userPhone, client) {
     }
 }
 
-async function checkDebt(userPhone, client) {
+async function checkDebt(chatId, userPhone, client) {
     const db = await connect('whmcs');
 
     const query = `
@@ -200,7 +200,7 @@ async function checkDebt(userPhone, client) {
 
         if (results.length === 0 || results[0].totalDebt <= 0) {
             const noDebtMessage = `🤖 No tenés deudas pendientes. Gracias por estar al día! 😊`;
-            await sendMessage(client, userPhone, noDebtMessage);
+            await sendMessage(client, chatId, noDebtMessage);
             return;
         }
 
@@ -214,8 +214,8 @@ async function checkDebt(userPhone, client) {
             `Alias para hacer el pago: *4evergaming*\n` +
             `Por favor enviar el comprobante de la transferencia 🙏`;
 
-        await sendMessage(client, userPhone, message);
-        console.log(`[200] Message sent to ${userPhone}`);
+        await sendMessage(client, chatId, message);
+        console.log(`[200] Message sent to ${chatId}`);
     } catch (err) {
         console.error('Error fetching invoices:', err);
     } finally {
@@ -223,12 +223,12 @@ async function checkDebt(userPhone, client) {
     }
 }
 
-async function markInvoicePaid(invoiceId, transactionId, amount, paymentMethod, userPhone, client) {
+async function markInvoicePaid(invoiceId, transactionId, amount, paymentMethod, chatId, client) {
     let result = await addTransaction(invoiceId, transactionId, amount, paymentMethod);
 
     if (result) {
         const message = `🤖 La factura *#${invoiceId}* ha sido marcada como PAGADA ✅🙌`;
-        await sendMessage(client, userPhone, message);
+        await sendMessage(client, chatId, message);
     }
 }
 

@@ -21,12 +21,12 @@ Para realizar pagos:
 *!tarjeta <factura>*: Pagar factura con tarjeta de credito, debito o pago facil
 `;
 
-async function getHelpCommands(userPhone, client) {
+async function getHelpCommands(chatId, client) {
     try {
-        await sendMessage(client, userPhone, help_commands_text);
-        console.log(`[200] Message sent to ${userPhone}`);
+        await sendMessage(client, chatId, help_commands_text);
+        console.log(`[200] Message sent to ${chatId}`);
     } catch (error) {
-        console.error(`[500] Error sending message to ${userPhone}:`, error);
+        console.error(`[500] Error sending message to ${chatId}:`, error);
     }
 }
 

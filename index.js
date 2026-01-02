@@ -10,6 +10,7 @@ const { payWithBankTransfer, payWithCard, payWithMercadoPago, payWithUala } = re
 const { getClientDetails } = require('./commands/clients');
 const { activeAllSensors } = require('./commands/sensors');
 const { deleteAllMessages } = require('./commands/admin');
+const { resolveForward, registerForwarder } = require('./utils/messages');
 
 // Crons
 const fetchAndSendMessages = require('./crons/message_sender');
@@ -57,13 +58,15 @@ client.on("disconnected", (reason) => {
 client.on('message_create', async (message) => {
     if (! isReady) return;
     
-    let userPhone = message.from;
+    let chatId = message.from;
     const commandParts = message.body.split(' ');
     
     // If I send the message, the message will still be directed to the client.
     if (message.fromMe) {
-        userPhone = message.to;
+        chatId = message.to;
     }
+
+    let userPhone =  await resolveForward(chatId);
 
     if (commandParts[0] === '!status' || commandParts[0] === '!estado') {
         await message.reply('🤖 Estoy en linea');
@@ -78,7 +81,7 @@ client.on('message_create', async (message) => {
     }
 
     if (commandParts[0] === '!ayuda' || commandParts[0] === '!help') {
-        await getHelpCommands(userPhone, client);
+        await getHelpCommands(chatId, userPhone, client);
     }
 
     //
@@ -86,7 +89,7 @@ client.on('message_create', async (message) => {
     //
 
     if (commandParts[0] === '!misfacturas' || commandParts[0] === '!facturas') {
-        await fetchPendingInvoices(userPhone, client);
+        await fetchPendingInvoices(chatId, userPhone, client);
     }
 
     if (commandParts[0] === '!factura' && commandParts.length === 2) {
@@ -97,7 +100,7 @@ client.on('message_create', async (message) => {
             return;
         }
         
-        await fetchInvoiceDetails(invoiceId, userPhone, client);
+        await fetchInvoiceDetails(invoiceId, chatId, userPhone, client);
     }
 
     if (commandParts[0] === '!detallefactura' && commandParts.length === 2) {
@@ -108,11 +111,11 @@ client.on('message_create', async (message) => {
             return;
         }
         
-        await fetchInvoiceItems(invoiceId, userPhone, client);
+        await fetchInvoiceItems(invoiceId, chatId, userPhone, client);
     }
 
     if (commandParts[0] === '!deuda') {
-        await checkDebt(userPhone, client);
+        await checkDebt(chatId, userPhone, client);
     }
 
     //
@@ -120,7 +123,7 @@ client.on('message_create', async (message) => {
     //
 
     if (commandParts[0] === '!misservicios' || commandParts[0] === '!servicios'|| commandParts[0] === '!misservidores'|| commandParts[0] === '!servidores') {
-        await fetchActiveServers(userPhone, client);
+        await fetchActiveServers(chatId, userPhone, client);
     }
 
     if (commandParts[0] === '!vencimiento' || commandParts[0] === '!vencimientos' || commandParts[0] === '!proximosvencimientos') {
@@ -130,24 +133,23 @@ client.on('message_create', async (message) => {
             days = 10;
         }
 
-        await fetchUpcomingDueDates(days, userPhone, client);
+        await fetchUpcomingDueDates(days, chatId, userPhone, client);
     }
 
     if (commandParts[0] === '!total') {
-        await getTotalSumOfContractedServices(userPhone, client);
+        await getTotalSumOfContractedServices(chatId, userPhone, client);
     }
 
     if (commandParts[0] === '!baja') {      
-        await requestCancel(userPhone, client);
+        await requestCancel(chatId, userPhone, client);
     }
 
     if (commandParts[0] === '!confirmarbaja' && commandParts.length === 2) {
         const filter = commandParts[1].trim();
 
-        // Si es un número, parseamos; si no, dejamos el string
-        const parsedFilter = /^\d+$/.test(filter) ? parseInt(filter, 10) : filter;
+        const serviceId = /^\d+$/.test(filter) ? parseInt(filter, 10) : filter;
 
-        await confirmRequestCancel(userPhone, client, parsedFilter);
+        await confirmRequestCancel(serviceId, chatId, userPhone, client);
     }
 
     //
@@ -157,7 +159,7 @@ client.on('message_create', async (message) => {
     if (commandParts[0] === '!transferencia' || commandParts[0] === '!cbu' || commandParts[0] === '!alias') {
         const invoiceId = parseInt(commandParts[1], 10);
 
-        await payWithBankTransfer(invoiceId, userPhone, client);
+        await payWithBankTransfer(invoiceId, chatId, userPhone, client);
     }
 
     if (commandParts[0] === '!tarjeta' && commandParts.length === 2) {
@@ -168,19 +170,19 @@ client.on('message_create', async (message) => {
             return;
         }
 
-        await payWithCard(invoiceId, userPhone, client);
+        await payWithCard(invoiceId, chatId, userPhone, client);
     }
 
     if (commandParts[0] === '!mercadopago') {
         const invoiceId = parseInt(commandParts[1], 10);
 
-        await payWithMercadoPago(invoiceId, userPhone, client);
+        await payWithMercadoPago(invoiceId, chatId, userPhone, client);
     }
 
     if (commandParts[0] === '!uala') {
         const invoiceId = parseInt(commandParts[1], 10);
 
-        await payWithUala(invoiceId, userPhone, client);
+        await payWithUala(invoiceId, chatId, userPhone, client);
     }
 
     //
@@ -211,7 +213,7 @@ client.on('message_create', async (message) => {
             return;
         }
 
-        await markInvoicePaid(invoiceId, transactionId, amount, paymentMethod, userPhone, client);
+        await markInvoicePaid(invoiceId, transactionId, amount, paymentMethod, chatId, client);
     }
 
     if (commandParts[0] === '!borrarmensajes') {
@@ -221,11 +223,11 @@ client.on('message_create', async (message) => {
             return;
         }
 
-        await deleteAllMessages(userPhone, client);
+        await deleteAllMessages(chatId, client);
     }
 
     if (commandParts[0] === '!cliente') {
-        await getClientDetails(userPhone, client);
+        await getClientDetails(chatId, userPhone, client);
     }
 
     if (commandParts[0] === '!activarsensores') {
@@ -235,7 +237,22 @@ client.on('message_create', async (message) => {
             return;
         }
 
-        await activeAllSensors(userPhone, client);
+        await activeAllSensors(chatId, client);
+    }
+
+    if (commandParts[0] === '!vincular' && commandParts.length === 2) {
+        if (!message.fromMe) {
+            await message.reply('🤖 Comando disponible solo para acceso administrativo');
+            return;
+        }
+
+        const forward = commandParts[1];
+
+        await registerForwarder(chatId, forward);
+
+        await message.reply(
+            `🤖 Vinculación creada correctamente\n📱 Chat: ${chatId}\n➡️ Forward: ${forward}`
+        );
     }
 
 });

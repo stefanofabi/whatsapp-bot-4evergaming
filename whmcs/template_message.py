@@ -76,3 +76,8 @@ client_area_login = """🤖 Nuevo inicio de sesión en Clientes
 *IP:* {ip}
 """
 
+service_comingTerminate = (
+    "🤖 Hola {firstName},\n\n"
+    "El servicio {domain} tiene una baja programada para el {suspendDate}.\n"
+    "Por favor revisá tu cuenta para evitar la interrupción."
+)

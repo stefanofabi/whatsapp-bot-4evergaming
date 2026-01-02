@@ -4,7 +4,7 @@ const { convertCurrency } = require('../utils/currencies');
 const { sendMessage } = require('../utils/messages');
 const { formatDate } = require('../utils/dates');
 
-async function payWithBankTransfer(invoiceId, userPhone, client) {
+async function payWithBankTransfer(invoiceId, chatId, userPhone, client) {
     const db = await connect('whmcs');
 
     const query = `
@@ -39,9 +39,9 @@ async function payWithBankTransfer(invoiceId, userPhone, client) {
 
         if (results.length === 0) {
             if (isNaN(invoiceId)) {
-                await sendMessage(client, userPhone, '🤖 No hay facturas pendientes por pagar');
+                await sendMessage(client, chatId, '🤖 No hay facturas pendientes por pagar');
             } else {
-                await sendMessage(client, userPhone, '🤖 No existe la factura');
+                await sendMessage(client, chatId, '🤖 No existe la factura');
             }
 
             await db.end();
@@ -63,7 +63,7 @@ async function payWithBankTransfer(invoiceId, userPhone, client) {
                 invoicesMessage += '🤖 Acá está tu factura pendiente:\n\n';
                 invoicesMessage += `*Factura: #${id}*\nFecha: ${formatDate(date)}\nVencimiento: ${formatDate(duedate)}\nTotal: \$${total} ARS\n`;
             } else {
-                await sendMessage(client, userPhone, '🤖 No podés pagar esta factura.\n\n Motivo: Estado de la factura ' + status);
+                await sendMessage(client, chatId, '🤖 No podés pagar esta factura.\n\n Motivo: Estado de la factura ' + status);
                 await db.end();
                 return;
             }
@@ -91,8 +91,8 @@ async function payWithBankTransfer(invoiceId, userPhone, client) {
                           `*Alias:* 4evergaming\n\n` +
                           `Por favor enviar el comprobante de la transferencia 🙏`;
 
-        await sendMessage(client, userPhone, invoicesMessage);
-        console.log(`[200] Message sent to ${userPhone}`);
+        await sendMessage(client, chatId, invoicesMessage);
+        console.log(`[200] Message sent to ${chatId}`);
     } catch (err) {
         console.error('Error fetching invoices:', err);
     } finally {
@@ -100,7 +100,7 @@ async function payWithBankTransfer(invoiceId, userPhone, client) {
     }
 }
 
-async function payWithCard(invoiceId, userPhone, client) {
+async function payWithCard(invoiceId, chatId, userPhone, client) {
     const db = await connect('whmcs');
 
     const query = `
@@ -134,7 +134,7 @@ async function payWithCard(invoiceId, userPhone, client) {
         const [results] = await db.execute(query, [invoiceId, userPhone.split('@')[0]]);
 
         if (results.length === 0) {
-            await sendMessage(client, userPhone, '🤖 No existe la factura');
+            await sendMessage(client, chatId, '🤖 No existe la factura');
             await db.end();
             return;
         }
@@ -142,7 +142,7 @@ async function payWithCard(invoiceId, userPhone, client) {
         let { id, date, duedate, total, status, currency } = results[0];
 
         if (status !== 'Unpaid') {
-            await sendMessage(client, userPhone, '🤖 No podés pagar esta factura.\n\n Motivo: Estado de la factura ' + status);
+            await sendMessage(client, chatId, '🤖 No podés pagar esta factura.\n\n Motivo: Estado de la factura ' + status);
             await db.end();
             return;
         }
@@ -157,8 +157,8 @@ async function payWithCard(invoiceId, userPhone, client) {
             const preferenceUrl = await createPaymentPreference(id, total);
             invoicesMessage += `\n\nPaga ahora tu factura desde este Link: ${preferenceUrl}`;
 
-            await sendMessage(client, userPhone, invoicesMessage);
-            console.log(`[200] Message sent to ${userPhone}`);
+            await sendMessage(client, chatId, invoicesMessage);
+            console.log(`[200] Message sent to ${chatId}`);
         } catch (err) {
             console.log('Error creating payment preference: ' + err);
         }
@@ -170,7 +170,7 @@ async function payWithCard(invoiceId, userPhone, client) {
     }
 }
 
-async function payWithMercadoPago(invoiceId, userPhone, client) {
+async function payWithMercadoPago(invoiceId, chatId, userPhone, client) {
     const db = await connect('whmcs');
 
     const query = `
@@ -205,9 +205,9 @@ async function payWithMercadoPago(invoiceId, userPhone, client) {
 
         if (results.length === 0) {
             if (isNaN(invoiceId)) {
-                await sendMessage(client, userPhone, '🤖 No hay facturas pendientes por pagar');
+                await sendMessage(client, chatId, '🤖 No hay facturas pendientes por pagar');
             } else {
-                await sendMessage(client, userPhone, '🤖 No existe la factura');
+                await sendMessage(client, chatId, '🤖 No existe la factura');
             }
 
             await db.end();
@@ -230,7 +230,7 @@ async function payWithMercadoPago(invoiceId, userPhone, client) {
                 invoicesMessage += '🤖 Acá está tu factura pendiente:\n\n';
                 invoicesMessage += `*Factura: #${id}*\nFecha: ${formatDate(date)}\nVencimiento: ${formatDate(duedate)}\nTotal: \$${total} ARS\n`;
             } else {
-                await sendMessage(client, userPhone, '🤖 No podés pagar esta factura.\n\n Motivo: Estado de la factura ' + status);
+                await sendMessage(client, chatId, '🤖 No podés pagar esta factura.\n\n Motivo: Estado de la factura ' + status);
                 await db.end();
                 return;
             }
@@ -254,8 +254,8 @@ async function payWithMercadoPago(invoiceId, userPhone, client) {
         invoicesMessage += `Abri la App de MercadoPago en tu celular y transferí al correo *cobranzas@4evergaming.com.ar*\n` +
                           `Por favor enviar el comprobante de la transferencia 🙏`;
 
-        await sendMessage(client, userPhone, invoicesMessage);
-        console.log(`[200] Message sent to ${userPhone}`);
+        await sendMessage(client, chatId, invoicesMessage);
+        console.log(`[200] Message sent to ${chatId}`);
 
     } catch (err) {
         console.error('Error fetching invoices:', err);
@@ -264,7 +264,7 @@ async function payWithMercadoPago(invoiceId, userPhone, client) {
     }
 }
 
-async function payWithUala(invoiceId, userPhone, client) {
+async function payWithUala(invoiceId, chatId, userPhone, client) {
     const db = await connect('whmcs');
 
     const query = `
@@ -299,9 +299,9 @@ async function payWithUala(invoiceId, userPhone, client) {
 
         if (results.length === 0) {
             if (isNaN(invoiceId)) {
-                await sendMessage(client, userPhone, '🤖 No hay facturas pendientes por pagar');
+                await sendMessage(client, chatId, '🤖 No hay facturas pendientes por pagar');
             } else {
-                await sendMessage(client, userPhone, '🤖 No existe la factura');
+                await sendMessage(client, chatId, '🤖 No existe la factura');
             }
 
             await db.end();
@@ -324,7 +324,7 @@ async function payWithUala(invoiceId, userPhone, client) {
                 invoicesMessage += '🤖 Acá está tu factura pendiente:\n\n';
                 invoicesMessage += `*Factura: #${id}*\nFecha: ${formatDate(date)}\nVencimiento: ${formatDate(duedate)}\nTotal: \$${total} ARS\n`;
             } else {
-                await sendMessage(client, userPhone, '🤖 No podés pagar esta factura.\n\n Motivo: Estado de la factura ' + status);
+                await sendMessage(client, chatId, '🤖 No podés pagar esta factura.\n\n Motivo: Estado de la factura ' + status);
                 await db.end();
                 return;
             }
@@ -348,8 +348,8 @@ async function payWithUala(invoiceId, userPhone, client) {
         invoicesMessage += `Abri la App de Uala en tu celular y buscanos con el usuario *4evergaming*\n` +
                           `Por favor enviar el comprobante de la transferencia 🙏`;
 
-        await sendMessage(client, userPhone, invoicesMessage);
-        console.log(`[200] Message sent to ${userPhone}`);
+        await sendMessage(client, chatId, invoicesMessage);
+        console.log(`[200] Message sent to ${chatId}`);
       
     } catch (err) {
         console.error('Error fetching invoices:', err);
