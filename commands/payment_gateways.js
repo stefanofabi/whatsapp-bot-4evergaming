@@ -37,12 +37,8 @@ async function payWithBankTransfer(invoiceId, chatId, userPhone, client) {
     try {
         const [results] = await db.execute(query, [isNaN(invoiceId) ? null : invoiceId, isNaN(invoiceId) ? null : invoiceId, userPhone.split('@')[0]]);
 
-        if (results.length === 0) {
-            if (isNaN(invoiceId)) {
-                await sendMessage(client, chatId, '🤖 No hay facturas pendientes por pagar');
-            } else {
-                await sendMessage(client, chatId, '🤖 No existe la factura');
-            }
+        if (results.length === 0 && !isNaN(invoiceId)) {
+            await sendMessage(client, chatId, '🤖 No existe la factura #'+ invoiceId);
 
             await db.end();
             return;
@@ -64,6 +60,7 @@ async function payWithBankTransfer(invoiceId, chatId, userPhone, client) {
                 invoicesMessage += `*Factura: #${id}*\nFecha: ${formatDate(date)}\nVencimiento: ${formatDate(duedate)}\nTotal: \$${total} ARS\n`;
             } else {
                 await sendMessage(client, chatId, '🤖 No podés pagar esta factura.\n\n Motivo: Estado de la factura ' + status);
+
                 await db.end();
                 return;
             }
@@ -79,6 +76,13 @@ async function payWithBankTransfer(invoiceId, chatId, userPhone, client) {
 
                 invoicesMessage += `*Factura: #${id}*\nFecha: ${formatDate(date)}\nVencimiento: ${formatDate(duedate)}\nMonto: \$${convertedTotal} ARS\n\n`;
             }
+        }
+
+        if (totalSum <= 0) {
+            await sendMessage(client, chatId, '🤖 No existen facturas pendiente de pago. Muchas gracias por estar al día!');
+
+            await db.end();
+            return;
         }
 
         const totalSumDiscount = Math.ceil(totalSum * 0.95);
