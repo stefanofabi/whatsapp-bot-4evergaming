@@ -2,6 +2,9 @@ const { Client, LocalAuth } = require('whatsapp-web.js');
 const qrcode = require('qrcode-terminal');
 const cron = require('node-cron');
 
+// Permissions
+const { isAdmin } = require('./utils/permissions');
+
 // Commands
 const { fetchPendingInvoices, fetchInvoiceDetails, fetchInvoiceItems, checkDebt, markInvoicePaid } = require('./commands/invoices');
 const { fetchActiveServers, fetchUpcomingDueDates, getTotalSumOfContractedServices, requestCancel, confirmRequestCancel } = require('./commands/services');
@@ -81,7 +84,7 @@ client.on('message_create', async (message) => {
     }
 
     if (commandParts[0] === '!ayuda' || commandParts[0] === '!help') {
-        await getHelpCommands(chatId, userPhone, client);
+        await getHelpCommands(chatId, client);
     }
 
     //
@@ -190,7 +193,7 @@ client.on('message_create', async (message) => {
     //
 
     if (commandParts[0] === '!marcarpagada' && commandParts.length === 5) {
-        if (! message.fromMe) {
+        if (! isAdmin(message)) {
             await message.reply('🤖 Comando disponible solo para acceso administrativo');
 
             return;
@@ -217,7 +220,7 @@ client.on('message_create', async (message) => {
     }
 
     if (commandParts[0] === '!borrarmensajes') {
-        if (! message.fromMe) {
+        if (! isAdmin(message)) {
             await message.reply('🤖 Comando disponible solo para acceso administrativo');
 
             return;
@@ -231,7 +234,7 @@ client.on('message_create', async (message) => {
     }
 
     if (commandParts[0] === '!activarsensores') {
-        if (! message.fromMe) {
+        if (! isAdmin(message)) {
             await message.reply('🤖 Comando disponible solo para acceso administrativo');
 
             return;
@@ -241,7 +244,7 @@ client.on('message_create', async (message) => {
     }
 
     if (commandParts[0] === '!vincular' && commandParts.length === 2) {
-        if (!message.fromMe) {
+        if (! isAdmin(message)) {
             await message.reply('🤖 Comando disponible solo para acceso administrativo');
             return;
         }

@@ -1,6 +1,9 @@
 const { connect } = require('../databases/connection');
 const { formatDate } = require('../utils/dates');
 
+// Delay function
+const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
 // Function to fetch and send messages
 async function fetchAndSendMessages(client) {
     const db = await connect('whatsapp');
@@ -19,7 +22,6 @@ async function fetchAndSendMessages(client) {
         for (const { id, phone, message } of results) {
             const phoneNumber = phone.split('@')[0];
 
-            // Validate that it only contains numbers
             if (/^\d+$/.test(phoneNumber)) {
                 try {
                     await client.sendMessage(phone, message);
@@ -27,6 +29,10 @@ async function fetchAndSendMessages(client) {
 
                     await db.execute('DELETE FROM messages WHERE id = ?', [id]);
                     console.log(`[${dateToday}] [200] Message deleted from database for ${phone}`);
+
+                    // 5 seconds to next message
+                    await delay(5000);
+
                 } catch (error) {
                     console.error(`[${dateToday}] [500] Error sending message to ${phone}:`, error);
                 }

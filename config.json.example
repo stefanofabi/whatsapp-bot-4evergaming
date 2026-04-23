@@ -1,4 +1,7 @@
 {
+    "admins": [
+        "5491133972764@c.us"
+    ],
     "databases": {
         "whmcs": {
             "host": "",
