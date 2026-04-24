@@ -1,7 +1,7 @@
 const { connect } = require('../databases/connection');
 const { sendMessage } = require('../utils/messages');
 
-async function getClientDetails(chatId, userPhone, client) {
+async function getClientDetails(chatId, clientWhmcs, client) {
     const db = await connect('whmcs');
 
     const query = `
@@ -13,15 +13,11 @@ async function getClientDetails(chatId, userPhone, client) {
         FROM 
             tblclients 
         WHERE 
-            CASE 
-                WHEN tblclients.phonenumber LIKE '+54%' THEN REPLACE(REPLACE(REPLACE(REPLACE(tblclients.phonenumber, '+', ''), '.', '9'), ' ', ''), '-', '')
-                WHEN tblclients.phonenumber LIKE '+52%' THEN REPLACE(REPLACE(REPLACE(REPLACE(tblclients.phonenumber, '+', ''), '.', '1'), ' ', ''), '-', '')
-                ELSE REPLACE(REPLACE(REPLACE(REPLACE(tblclients.phonenumber, '+', ''), ' ', ''), '-', ''), '.', '') 
-            END = ?
+            tblclients.id = ?
     `;
 
     try {
-        const [results] = await db.execute(query, [userPhone.split('@')[0]]);
+        const [results] = await db.execute(query, [clientWhmcs]);
 
         if (results.length === 0) {
             await sendMessage(client, chatId, '🤖 No se encontraron datos para este teléfono');

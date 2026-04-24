@@ -39,9 +39,7 @@ for invoice in resultInvoices:
     SELECT id, firstname, lastname, phonenumber, currency, groupid, defaultgateway 
     FROM tblclients 
     WHERE id = %s 
-    AND email_preferences LIKE '%invoice%:%1%' 
     AND groupid <> %s
-    AND phonenumber <> '' 
     """, (invoice[1], config.GRUPO_DEBITO_AUTOMATICO))
     
     resultClients = access.fetchall()
@@ -50,7 +48,7 @@ for invoice in resultInvoices:
     for client in resultClients:
         clientId = client[0]
         firstName = client[1].split(" ")[0]
-        phone = config.get_forwarded_number(config.formatNumber(client[3]))
+        chats = config.get_forwarded_numbers(client[0])
         currency_code = client[4]
         currency = config.CURRENCY_CODES.get(str(currency_code), "ARS")  # "ARS" is the default value if the code is not found
         payment_option = client[6]
@@ -76,14 +74,15 @@ for invoice in resultInvoices:
             )
 
         # Insert the message into the `messages` table in the WhatsApp database
-        insert_sql = "INSERT INTO messages (phone, message) VALUES (%s, %s)"
-        whatsapp_access.execute(insert_sql, (phone, messageToSend))
-        config.db_whatsapp.commit()  # Commit the transaction
+        for chat in chats:
+            insert_sql = "INSERT INTO messages (chat, message) VALUES (%s, %s)"
+            whatsapp_access.execute(insert_sql, (chat, messageToSend))
+            config.db_whatsapp.commit()
 
-        print("Message saved in the WhatsApp database for user #" + str(clientId))
+            print(f"Message saved for user #{client[0]} -> {chat}")
 
-        # Wait 1 second before processing the next client
-        time.sleep(1)
+            # Wait 1 second before processing the next client
+            time.sleep(1)
 
 # Close the cursors
 access.close()

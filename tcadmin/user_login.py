@@ -13,10 +13,10 @@ access = config.db.cursor()
 # Query to fetch user login details
 sql = """
 SELECT user_id, user_name, DATE_FORMAT(DATE_SUB(last_login, INTERVAL 180 MINUTE), '%d %M %Y %k:%iHs.') AS last_login, 
-       last_login_ip, first_name, last_name, country, home_phone 
+       last_login_ip, first_name, last_name, country, billing_id 
 FROM tc_users 
 WHERE last_login >= DATE_ADD(NOW(), INTERVAL 175 MINUTE)
-AND home_phone <> '' 
+AND billing_id <> '' 
 """
 access.execute(sql)
 clients = access.fetchall()
@@ -28,38 +28,24 @@ for x in clients:
     username = x[1]
     firstName = x[4].split(" ")[0]
     lastName = x[5]
-    phone = x[7].replace('.', '9').replace('-', '').replace(' ', '')
-    
-    if (x[6] == "AR"): 
-        phone = "549" + phone + "@c.us"
-    elif (x[6] == "CL"): 
-        phone = "56" + phone + "@c.us"
-    elif (x[6] == "UY"): 
-        phone = "598" + phone + "@c.us"
-    elif (x[6] == "PE"): 
-        phone = "51" + phone + "@c.us"
-    elif (x[6] == "EC"): 
-        phone = "593" + phone + "@c.us"
-    else:
-        continue
+    chats = config.get_forwarded_numbers(x[7])
 
-    phone = config.get_forwarded_number(phone)
-    
     lastLogin = x[2]
     ip = x[3]
 
     # Prepare the message to send
-    messageToSend = template_message.user_login.format(firstName=firstName, lastName=lastName, phone=phone, lastlogin=lastLogin, ip=ip, username=username)
+    messageToSend = template_message.user_login.format(firstName=firstName, lastName=lastName, lastlogin=lastLogin, ip=ip, username=username)
 
     # Insert the message into the WhatsApp database
-    insert_sql = "INSERT INTO messages (phone, message) VALUES (%s, %s)"
-    whatsapp_access.execute(insert_sql, (phone, messageToSend))
-    config.db_whatsapp.commit()  # Commit the transaction
+    for chat in chats:
+        insert_sql = "INSERT INTO messages (chat, message) VALUES (%s, %s)"
+        whatsapp_access.execute(insert_sql, (chat, messageToSend))
+        config.db_whatsapp.commit()
 
-    print("Message saved in the WhatsApp database for user #" + str(x[0])) 
+        print(f"Message saved for user #{x[0]} -> {chat}")
 
-    # Wait 1 second before processing the next message
-    time.sleep(1)
+        # Wait 1 second before processing the next client
+        time.sleep(1)
 
 # Close the cursors
 access.close()

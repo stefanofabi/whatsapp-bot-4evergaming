@@ -92,18 +92,15 @@ def formatNumber(number):
     
     return formatted_number + "@c.us"
 
-def get_forwarded_number(phone):
-
+def get_forwarded_numbers(clientId):
     cursor = db_whatsapp.cursor(buffered=True)
     cursor.execute(
-        "SELECT phone FROM forwarders WHERE forward LIKE %s LIMIT 1",
-        (f"{phone}%",)
+        "SELECT chatid FROM chats WHERE clientwhmcs = %s",
+        (clientId,)
     )
 
-    result = cursor.fetchone()
-    cursor.close() 
+    results = cursor.fetchall()
+    cursor.close()
 
-    return result[0] if result else phone
-
-
+    return [row[0] for row in results] if results else []
 

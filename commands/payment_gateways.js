@@ -4,7 +4,7 @@ const { convertCurrency } = require('../utils/currencies');
 const { sendMessage } = require('../utils/messages');
 const { formatDate } = require('../utils/dates');
 
-async function payWithBankTransfer(invoiceId, chatId, userPhone, client) {
+async function payWithBankTransfer(invoiceId, chatId, clientWhmcs, client) {
     const db = await connect('whmcs');
 
     const query = `
@@ -27,15 +27,11 @@ async function payWithBankTransfer(invoiceId, chatId, userPhone, client) {
             tblclients.currency = tblcurrencies.id 
         WHERE 
             (tblinvoices.id = ? OR ? IS NULL) AND
-            CASE 
-                WHEN tblclients.phonenumber LIKE '+54%' THEN REPLACE(REPLACE(REPLACE(REPLACE(tblclients.phonenumber, '+', ''), '.', '9'), ' ', ''), '-', '')
-                WHEN tblclients.phonenumber LIKE '+52%' THEN REPLACE(REPLACE(REPLACE(REPLACE(tblclients.phonenumber, '+', ''), '.', '1'), ' ', ''), '-', '')
-                ELSE REPLACE(REPLACE(REPLACE(REPLACE(tblclients.phonenumber, '+', ''), ' ', ''), '-', ''), '.', '') 
-            END = ?
+            tblclients.id = ?
     `;
 
     try {
-        const [results] = await db.execute(query, [isNaN(invoiceId) ? null : invoiceId, isNaN(invoiceId) ? null : invoiceId, userPhone.split('@')[0]]);
+        const [results] = await db.execute(query, [isNaN(invoiceId) ? null : invoiceId, isNaN(invoiceId) ? null : invoiceId, clientWhmcs]);
 
         if (results.length === 0 && !isNaN(invoiceId)) {
             await sendMessage(client, chatId, '🤖 No existe la factura #'+ invoiceId);
@@ -104,7 +100,7 @@ async function payWithBankTransfer(invoiceId, chatId, userPhone, client) {
     }
 }
 
-async function payWithCard(invoiceId, chatId, userPhone, client) {
+async function payWithCard(invoiceId, chatId, clientWhmcs, client) {
     const db = await connect('whmcs');
 
     const query = `
@@ -127,15 +123,11 @@ async function payWithCard(invoiceId, chatId, userPhone, client) {
             tblclients.currency = tblcurrencies.id 
         WHERE 
             tblinvoices.id = ? AND
-            CASE 
-                WHEN tblclients.phonenumber LIKE '+54%' THEN REPLACE(REPLACE(REPLACE(REPLACE(tblclients.phonenumber, '+', ''), '.', '9'), ' ', ''), '-', '')
-                WHEN tblclients.phonenumber LIKE '+52%' THEN REPLACE(REPLACE(REPLACE(REPLACE(tblclients.phonenumber, '+', ''), '.', '1'), ' ', ''), '-', '')
-                ELSE REPLACE(REPLACE(REPLACE(REPLACE(tblclients.phonenumber, '+', ''), ' ', ''), '-', ''), '.', '') 
-            END = ?
+            tblclients.id = ?
     `;
 
     try {
-        const [results] = await db.execute(query, [invoiceId, userPhone.split('@')[0]]);
+        const [results] = await db.execute(query, [invoiceId, clientWhmcs]);
 
         if (results.length === 0) {
             await sendMessage(client, chatId, '🤖 No existe la factura');
@@ -174,7 +166,7 @@ async function payWithCard(invoiceId, chatId, userPhone, client) {
     }
 }
 
-async function payWithMercadoPago(invoiceId, chatId, userPhone, client) {
+async function payWithMercadoPago(invoiceId, chatId, clientWhmcs, client) {
     const db = await connect('whmcs');
 
     const query = `
@@ -197,15 +189,11 @@ async function payWithMercadoPago(invoiceId, chatId, userPhone, client) {
             tblclients.currency = tblcurrencies.id 
         WHERE 
             (tblinvoices.id = ? OR ? IS NULL) AND
-            CASE 
-                WHEN tblclients.phonenumber LIKE '+54%' THEN REPLACE(REPLACE(REPLACE(REPLACE(tblclients.phonenumber, '+', ''), '.', '9'), ' ', ''), '-', '')
-                WHEN tblclients.phonenumber LIKE '+52%' THEN REPLACE(REPLACE(REPLACE(REPLACE(tblclients.phonenumber, '+', ''), '.', '1'), ' ', ''), '-', '')
-                ELSE REPLACE(REPLACE(REPLACE(REPLACE(tblclients.phonenumber, '+', ''), ' ', ''), '-', ''), '.', '') 
-            END = ?
+            tblclients.id = ?
     `;
 
     try {
-        const [results] = await db.execute(query, [isNaN(invoiceId) ? null : invoiceId, isNaN(invoiceId) ? null : invoiceId, userPhone.split('@')[0]]);
+        const [results] = await db.execute(query, [isNaN(invoiceId) ? null : invoiceId, isNaN(invoiceId) ? null : invoiceId, clientWhmcs]);
 
         if (results.length === 0) {
             if (isNaN(invoiceId)) {
@@ -268,7 +256,7 @@ async function payWithMercadoPago(invoiceId, chatId, userPhone, client) {
     }
 }
 
-async function payWithUala(invoiceId, chatId, userPhone, client) {
+async function payWithUala(invoiceId, chatId, clientWhmcs, client) {
     const db = await connect('whmcs');
 
     const query = `
@@ -291,15 +279,11 @@ async function payWithUala(invoiceId, chatId, userPhone, client) {
             tblclients.currency = tblcurrencies.id 
         WHERE 
             (tblinvoices.id = ? OR ? IS NULL) AND
-            CASE 
-                WHEN tblclients.phonenumber LIKE '+54%' THEN REPLACE(REPLACE(REPLACE(REPLACE(tblclients.phonenumber, '+', ''), '.', '9'), ' ', ''), '-', '')
-                WHEN tblclients.phonenumber LIKE '+52%' THEN REPLACE(REPLACE(REPLACE(REPLACE(tblclients.phonenumber, '+', ''), '.', '1'), ' ', ''), '-', '')
-                ELSE REPLACE(REPLACE(REPLACE(REPLACE(tblclients.phonenumber, '+', ''), ' ', ''), '-', ''), '.', '') 
-            END = ?
+            tblclients.id = ?
     `;
 
     try {
-        const [results] = await db.execute(query, [isNaN(invoiceId) ? null : invoiceId, isNaN(invoiceId) ? null : invoiceId, userPhone.split('@')[0]]);
+        const [results] = await db.execute(query, [isNaN(invoiceId) ? null : invoiceId, isNaN(invoiceId) ? null : invoiceId, clientWhmcs]);
 
         if (results.length === 0) {
             if (isNaN(invoiceId)) {
@@ -311,7 +295,6 @@ async function payWithUala(invoiceId, chatId, userPhone, client) {
             await db.end();
             return;
         }
-      
       
       	let totalSum = 0;
         let invoicesMessage = "";

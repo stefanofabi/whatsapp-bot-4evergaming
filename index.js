@@ -13,7 +13,7 @@ const { payWithBankTransfer, payWithCard, payWithMercadoPago, payWithUala } = re
 const { getClientDetails } = require('./commands/clients');
 const { activeAllSensors } = require('./commands/sensors');
 const { deleteAllMessages } = require('./commands/admin');
-const { resolveForward, registerForwarder } = require('./utils/messages');
+const { resolveClient, registerChat } = require('./utils/messages');
 
 // Crons
 const fetchAndSendMessages = require('./crons/message_sender');
@@ -69,13 +69,13 @@ client.on('message_create', async (message) => {
         chatId = message.to;
     }
 
-    let userPhone =  await resolveForward(chatId);
+    let clientWhmcs =  await resolveClient(chatId);
 
     if (commandParts[0] === '!status' || commandParts[0] === '!estado') {
         await message.reply('🤖 Estoy en linea');
     }
 
-    if (commandParts[0] === '!chatid') {
+    if (commandParts[0] === '!chatid' || commandParts[0] === '!chat') {
         if (message.fromMe) {
             await message.reply('🤖 El chat id es '+message.to);
         } else {
@@ -92,7 +92,7 @@ client.on('message_create', async (message) => {
     //
 
     if (commandParts[0] === '!misfacturas' || commandParts[0] === '!facturas') {
-        await fetchPendingInvoices(chatId, userPhone, client);
+        await fetchPendingInvoices(chatId, clientWhmcs, client);
     }
 
     if (commandParts[0] === '!factura' && commandParts.length === 2) {
@@ -103,7 +103,7 @@ client.on('message_create', async (message) => {
             return;
         }
         
-        await fetchInvoiceDetails(invoiceId, chatId, userPhone, client);
+        await fetchInvoiceDetails(invoiceId, chatId, clientWhmcs, client);
     }
 
     if (commandParts[0] === '!detallefactura' && commandParts.length === 2) {
@@ -114,11 +114,11 @@ client.on('message_create', async (message) => {
             return;
         }
         
-        await fetchInvoiceItems(invoiceId, chatId, userPhone, client);
+        await fetchInvoiceItems(invoiceId, chatId, clientWhmcs, client);
     }
 
     if (commandParts[0] === '!deuda') {
-        await checkDebt(chatId, userPhone, client);
+        await checkDebt(chatId, clientWhmcs, client);
     }
 
     //
@@ -126,7 +126,7 @@ client.on('message_create', async (message) => {
     //
 
     if (commandParts[0] === '!misservicios' || commandParts[0] === '!servicios'|| commandParts[0] === '!misservidores'|| commandParts[0] === '!servidores') {
-        await fetchActiveServers(chatId, userPhone, client);
+        await fetchActiveServers(chatId, clientWhmcs, client);
     }
 
     if (commandParts[0] === '!vencimiento' || commandParts[0] === '!vencimientos' || commandParts[0] === '!proximosvencimientos') {
@@ -136,15 +136,15 @@ client.on('message_create', async (message) => {
             days = 10;
         }
 
-        await fetchUpcomingDueDates(days, chatId, userPhone, client);
+        await fetchUpcomingDueDates(days, chatId, clientWhmcs, client);
     }
 
     if (commandParts[0] === '!total') {
-        await getTotalSumOfContractedServices(chatId, userPhone, client);
+        await getTotalSumOfContractedServices(chatId, clientWhmcs, client);
     }
 
     if (commandParts[0] === '!baja') {      
-        await requestCancel(chatId, userPhone, client);
+        await requestCancel(chatId, clientWhmcs, client);
     }
 
     if (commandParts[0] === '!confirmarbaja' && commandParts.length === 2) {
@@ -152,7 +152,7 @@ client.on('message_create', async (message) => {
 
         const serviceId = /^\d+$/.test(filter) ? parseInt(filter, 10) : filter;
 
-        await confirmRequestCancel(serviceId, chatId, userPhone, client);
+        await confirmRequestCancel(serviceId, chatId, clientWhmcs, client);
     }
 
     //
@@ -162,7 +162,7 @@ client.on('message_create', async (message) => {
     if (commandParts[0] === '!transferencia' || commandParts[0] === '!cbu' || commandParts[0] === '!alias') {
         const invoiceId = parseInt(commandParts[1], 10);
 
-        await payWithBankTransfer(invoiceId, chatId, userPhone, client);
+        await payWithBankTransfer(invoiceId, chatId, clientWhmcs, client);
     }
 
     if (commandParts[0] === '!tarjeta' && commandParts.length === 2) {
@@ -173,19 +173,19 @@ client.on('message_create', async (message) => {
             return;
         }
 
-        await payWithCard(invoiceId, chatId, userPhone, client);
+        await payWithCard(invoiceId, chatId, clientWhmcs, client);
     }
 
     if (commandParts[0] === '!mercadopago') {
         const invoiceId = parseInt(commandParts[1], 10);
 
-        await payWithMercadoPago(invoiceId, chatId, userPhone, client);
+        await payWithMercadoPago(invoiceId, chatId, clientWhmcs, client);
     }
 
     if (commandParts[0] === '!uala') {
         const invoiceId = parseInt(commandParts[1], 10);
 
-        await payWithUala(invoiceId, chatId, userPhone, client);
+        await payWithUala(invoiceId, chatId, clientWhmcs, client);
     }
 
     //
@@ -230,7 +230,7 @@ client.on('message_create', async (message) => {
     }
 
     if (commandParts[0] === '!cliente') {
-        await getClientDetails(chatId, userPhone, client);
+        await getClientDetails(chatId, clientWhmcs, client);
     }
 
     if (commandParts[0] === '!activarsensores') {
@@ -244,18 +244,9 @@ client.on('message_create', async (message) => {
     }
 
     if (commandParts[0] === '!vincular' && commandParts.length === 2) {
-        if (! isAdmin(message)) {
-            await message.reply('🤖 Comando disponible solo para acceso administrativo');
-            return;
-        }
+        const code = commandParts[1];
 
-        const forward = commandParts[1];
-
-        await registerForwarder(chatId, forward);
-
-        await message.reply(
-            `🤖 Vinculación creada correctamente\n📱 Chat: ${chatId}\n➡️ Forward: ${forward}`
-        );
+        await registerChat(chatId, code, client);
     }
 
 });

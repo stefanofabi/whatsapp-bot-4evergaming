@@ -12,7 +12,7 @@ access = config.db.cursor()
 
 # Query to fetch client details
 sql = """
-SELECT tc_users.user_id, tc_users.first_name, tc_users.last_name, tc_users.country, tc_users.home_phone, 
+SELECT tc_users.user_id, tc_users.first_name, tc_users.last_name, tc_users.country, tc_users.billing_id, 
        tc_game_services.service_id, tc_game_services.ip_address, tc_game_services.game_port, 
        tc_services.display_name, DATE_FORMAT(DATE_SUB(tc_game_service_live_stats.start_time, INTERVAL 180 MINUTE), '%d %M %Y %k:%iHs.') AS start_time 
 FROM tc_game_service_live_stats 
@@ -20,7 +20,7 @@ INNER JOIN tc_services ON tc_services.service_id = tc_game_service_live_stats.se
 INNER JOIN tc_game_services ON tc_game_services.service_id = tc_services.service_id 
 INNER JOIN tc_users ON tc_users.user_id = tc_services.user_id 
 WHERE tc_game_service_live_stats.start_time >= DATE_ADD(NOW(), INTERVAL 175 MINUTE) 
-AND tc_users.home_phone <> ''
+AND tc_users.billing_id <> ''
 """
 access.execute(sql)
 clients = access.fetchall()
@@ -30,22 +30,7 @@ whatsapp_access = config.db_whatsapp.cursor()
 
 for client in clients:   
     firstName = client[1].split(" ")[0]
-    phone = client[4].replace('.', '9').replace('-', '').replace(' ', '')
-    
-    if (client[3] == "AR"): 
-        phone = "549" + phone + "@c.us"
-    elif (client[3] == "CL"): 
-        phone = "56" + phone + "@c.us"
-    elif (client[3] == "UY"): 
-        phone = "598" + phone + "@c.us"
-    elif (client[3] == "PE"): 
-        phone = "51" + phone + "@c.us"
-    elif (client[3] == "EC"): 
-        phone = "593" + phone + "@c.us"
-    else:
-        continue
-
-    phone = config.get_forwarded_number(phone)
+    chats = config.get_forwarded_numbers(client[4])
 
     service_id = client[5]
     ip_address = client[6]
@@ -54,17 +39,18 @@ for client in clients:
     start_time = client[9]
 
     # Prepare the message to send
-    messageToSend = template_message.server_started.format(firstName=firstName, phone=phone, service_id=service_id, ip_address=ip_address, game_port=game_port, server_name=server_name, start_time=start_time)
+    messageToSend = template_message.server_started.format(firstName=firstName, service_id=service_id, ip_address=ip_address, game_port=game_port, server_name=server_name, start_time=start_time)
     
     # Insert the message into the database
-    insert_sql = "INSERT INTO messages (phone, message) VALUES (%s, %s)"
-    whatsapp_access.execute(insert_sql, (phone, messageToSend))
-    config.db_whatsapp.commit()  # Commit the transaction
+    for chat in chats:
+        insert_sql = "INSERT INTO messages (chat, message) VALUES (%s, %s)"
+        whatsapp_access.execute(insert_sql, (chat, messageToSend))
+        config.db_whatsapp.commit()
 
-    print("Message saved in the database for user #" + str(client[0])) 
+        print(f"Message saved for user #{client[0]} -> {chat}")
 
-    # Wait 1 second before processing the next message
-    time.sleep(1)
+        # Wait 1 second before processing the next client
+        time.sleep(1)
 
 # Close the cursor
 access.close()

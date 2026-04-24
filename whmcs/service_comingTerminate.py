@@ -31,7 +31,6 @@ for service in resultServices:
     FROM tblclients
     WHERE id = %s
     AND groupid <> %s
-    AND phonenumber <> ''
     """, (userId, config.GRUPO_DEBITO_AUTOMATICO))
 
     resultClients = access.fetchall()
@@ -39,23 +38,25 @@ for service in resultServices:
     for client in resultClients:
         clientId = client[0]
         firstName = client[1].split(" ")[0]
-        phone = config.get_forwarded_number(config.formatNumber(client[2]))
+        chats = config.get_forwarded_numbers(client[0])
 
-        # Mensaje único
+        # Use the existing template for the message
         messageToSend = template_message.service_comingTerminate.format(
             firstName=firstName,
             domain=domain,
             suspendDate=suspendDate
         )
 
-        # Guardar mensaje en WhatsApp
-        insert_sql = "INSERT INTO messages (phone, message) VALUES (%s, %s)"
-        whatsapp_access.execute(insert_sql, (phone, messageToSend))
-        config.db_whatsapp.commit()
+        # Insert the message into the `messages` table in the second database
+        for chat in chats:
+            insert_sql = "INSERT INTO messages (chat, message) VALUES (%s, %s)"
+            whatsapp_access.execute(insert_sql, (chat, messageToSend))
+            config.db_whatsapp.commit()
+            
+            print(f"Message saved for user #{client[0]} -> {chat}")
 
-        print(f"Mensaje guardado para cliente #{clientId} – {domain}")
-
-        time.sleep(1)
+            # Wait 1 second before processing the next client
+            time.sleep(1)
 
 # Cerrar cursores
 access.close()

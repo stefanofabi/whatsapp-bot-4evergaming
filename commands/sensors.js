@@ -36,7 +36,7 @@ async function activeAllSensors(chatId, client) {
                     connectTimeout: 10000
                 });
 
-                // Solo activar sensores que están desactivados
+                // Only activate sensors that are currently deactivated
                 const [result] = await nodeConn.execute('UPDATE sensors SET active = 1 WHERE active = 0');
 
                 const updated = result?.affectedRows || 0;
@@ -55,7 +55,6 @@ async function activeAllSensors(chatId, client) {
             }
         }
 
-        // Generar mensaje de respuesta
         let message = `🤖 Actualización completada.\nTotal sensores activados: ${totalUpdated}`;
 
         const successfulNodes = perNodeResults.filter(r => r.ok);

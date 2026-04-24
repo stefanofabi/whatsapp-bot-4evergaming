@@ -3,7 +3,7 @@ const { addTransaction } = require('../utils/whmcs');
 const { sendMessage } = require('../utils/messages');
 const { formatDate } = require('../utils/dates'); // Incluimos el archivo dates.js
 
-async function fetchPendingInvoices(chatId, userPhone, client) {
+async function fetchPendingInvoices(chatId, clientWhmcs, client) {
     const db = await connect('whmcs');
 
     const query = `
@@ -21,15 +21,11 @@ async function fetchPendingInvoices(chatId, userPhone, client) {
             tblinvoices.userid = tblclients.id 
         WHERE 
             tblinvoices.status = ? AND
-            CASE 
-                WHEN tblclients.phonenumber LIKE '+54%' THEN REPLACE(REPLACE(REPLACE(REPLACE(tblclients.phonenumber, '+', ''), '.', '9'), ' ', ''), '-', '')
-                WHEN tblclients.phonenumber LIKE '+52%' THEN REPLACE(REPLACE(REPLACE(REPLACE(tblclients.phonenumber, '+', ''), '.', '1'), ' ', ''), '-', '')
-                ELSE REPLACE(REPLACE(REPLACE(REPLACE(tblclients.phonenumber, '+', ''), ' ', ''), '-', ''), '.', '') 
-            END = ?
+            tblclients.id = ?
     `;
 
     try {
-        const [results] = await db.execute(query, ["Unpaid", userPhone.split('@')[0]]);
+        const [results] = await db.execute(query, ["Unpaid", clientWhmcs]);
 
         if (results.length === 0) {
             await sendMessage(client, chatId, '🤖 No hay facturas pendientes');
@@ -51,7 +47,7 @@ async function fetchPendingInvoices(chatId, userPhone, client) {
     }
 }
 
-async function fetchInvoiceDetails(invoiceId, chatId, userPhone, client) {
+async function fetchInvoiceDetails(invoiceId, chatId, clientWhmcs, client) {
     const db = await connect('whmcs');
     
     const query = `
@@ -72,15 +68,11 @@ async function fetchInvoiceDetails(invoiceId, chatId, userPhone, client) {
             tblinvoices.userid = tblclients.id 
         WHERE 
             tblinvoices.id = ? AND
-            CASE 
-                WHEN tblclients.phonenumber LIKE '+54%' THEN REPLACE(REPLACE(REPLACE(REPLACE(tblclients.phonenumber, '+', ''), '.', '9'), ' ', ''), '-', '')
-                WHEN tblclients.phonenumber LIKE '+52%' THEN REPLACE(REPLACE(REPLACE(REPLACE(tblclients.phonenumber, '+', ''), '.', '1'), ' ', ''), '-', '')
-                ELSE REPLACE(REPLACE(REPLACE(REPLACE(tblclients.phonenumber, '+', ''), ' ', ''), '-', ''), '.', '') 
-            END = ?
+            tblclients.id = ?
     `;
 
     try {
-        const [results] = await db.execute(query, [invoiceId, userPhone.split('@')[0]]);
+        const [results] = await db.execute(query, [invoiceId, clientWhmcs]);
 
         if (results.length === 0) {
             await sendMessage(client, chatId, `🤖 No se encontró la factura #${invoiceId}`);
@@ -107,7 +99,7 @@ async function fetchInvoiceDetails(invoiceId, chatId, userPhone, client) {
     }
 }
 
-async function fetchInvoiceItems(invoiceId, chatId, userPhone, client) {
+async function fetchInvoiceItems(invoiceId, chatId, clientWhmcs, client) {
     const db = await connect('whmcs');
     
     const query = `
@@ -124,15 +116,11 @@ async function fetchInvoiceItems(invoiceId, chatId, userPhone, client) {
             tblinvoiceitems.userid = tblclients.id 
         WHERE 
             tblinvoiceitems.invoiceid = ? AND
-            CASE 
-                WHEN tblclients.phonenumber LIKE '+54%' THEN REPLACE(REPLACE(REPLACE(REPLACE(tblclients.phonenumber, '+', ''), '.', '9'), ' ', ''), '-', '')
-                WHEN tblclients.phonenumber LIKE '+52%' THEN REPLACE(REPLACE(REPLACE(REPLACE(tblclients.phonenumber, '+', ''), '.', '1'), ' ', ''), '-', '')
-                ELSE REPLACE(REPLACE(REPLACE(REPLACE(tblclients.phonenumber, '+', ''), ' ', ''), '-', ''), '.', '') 
-            END = ?
+            tblclients.id = ?
     `;
 
     try {
-        const [results] = await db.execute(query, [invoiceId, userPhone.split('@')[0]]);
+        const [results] = await db.execute(query, [invoiceId, clientWhmcs]);
 
         if (results.length === 0) {
             await sendMessage(client, chatId, `🤖 No se encontró la factura #${invoiceId}`);
@@ -159,7 +147,7 @@ async function fetchInvoiceItems(invoiceId, chatId, userPhone, client) {
     }
 }
 
-async function checkDebt(chatId, userPhone, client) {
+async function checkDebt(chatId, clientWhmcs, client) {
     const db = await connect('whmcs');
 
     const query = `
@@ -186,17 +174,13 @@ async function checkDebt(chatId, userPhone, client) {
         ) AS pagos ON pagos.invoiceid = tblinvoices.id
         WHERE 
             tblinvoices.status = "Unpaid" AND 
-            CASE 
-                WHEN tblclients.phonenumber LIKE '+54%' THEN REPLACE(REPLACE(REPLACE(REPLACE(tblclients.phonenumber, '+', ''), '.', '9'), ' ', ''), '-', '')
-                WHEN tblclients.phonenumber LIKE '+52%' THEN REPLACE(REPLACE(REPLACE(REPLACE(tblclients.phonenumber, '+', ''), '.', '1'), ' ', ''), '-', '')
-                ELSE REPLACE(REPLACE(REPLACE(REPLACE(tblclients.phonenumber, '+', ''), ' ', ''), '-', ''), '.', '') 
-            END = ?
+            tblclients.id = ?
         GROUP BY 
             tblclients.id
     `;
 
     try {
-        const [results] = await db.execute(query, [userPhone.split('@')[0]]);
+        const [results] = await db.execute(query, [clientWhmcs]);
 
         if (results.length === 0 || results[0].totalDebt <= 0) {
             const noDebtMessage = `🤖 No tenés deudas pendientes. Gracias por estar al día! 😊`;

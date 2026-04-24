@@ -13,32 +13,30 @@ async function fetchAndSendMessages(client) {
     console.log(`[${dateToday}] Running scheduled task to send messages`);
 
     try {
-        const [results] = await db.execute('SELECT id, phone, message FROM messages');
+        const [results] = await db.execute('SELECT id, chat, message FROM messages');
 
         if (results.length === 0) {
             console.log(`[${dateToday}] No messages to send`);
         }
 
-        for (const { id, phone, message } of results) {
-            const phoneNumber = phone.split('@')[0];
-
-            if (/^\d+$/.test(phoneNumber)) {
+        for (const { id, chat, message } of results) {
+            if (/^\d+@g\.us$/.test(chat)) {
                 try {
-                    await client.sendMessage(phone, message);
-                    console.log(`[${dateToday}] [200] Message sent to ${phone}`);
+                    await client.sendMessage(chat, message);
+                    console.log(`[${dateToday}] [200] Message sent to ${chat}`);
 
                     await db.execute('DELETE FROM messages WHERE id = ?', [id]);
-                    console.log(`[${dateToday}] [200] Message deleted from database for ${phone}`);
+                    console.log(`[${dateToday}] [200] Message deleted from database for ${chat}`);
 
                     // 5 seconds to next message
                     await delay(5000);
 
                 } catch (error) {
-                    console.error(`[${dateToday}] [500] Error sending message to ${phone}:`, error);
+                    console.error(`[${dateToday}] [500] Error sending message to ${chat}:`, error);
                 }
             } else {
                 await db.execute('DELETE FROM messages WHERE id = ?', [id]);
-                console.log(`[${dateToday}] [400] Invalid phone number format for ${phone}. Message deleted from database.`);
+                console.log(`[${dateToday}] [400] Invalid phone number format for ${chat}. Message deleted from database.`);
             }
         }
     } catch (err) {

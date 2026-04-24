@@ -4,7 +4,7 @@ const { formatDate } = require('../utils/dates');
 const { addCancelRequest } = require('../utils/whmcs');
 
 // Function to fetch active servers
-async function fetchActiveServers(chatId, userPhone, client) 
+async function fetchActiveServers(chatId, clientWhmcs, client) 
 {
     const db = await connect('whmcs');
 
@@ -26,15 +26,11 @@ async function fetchActiveServers(chatId, userPhone, client)
             tblcurrencies ON tblclients.currency = tblcurrencies.id
         WHERE 
             tblhosting.domainstatus IN ("Active", "Suspended") AND
-            CASE 
-                WHEN tblclients.phonenumber LIKE '+54%' THEN REPLACE(REPLACE(REPLACE(REPLACE(tblclients.phonenumber, '+', ''), '.', '9'), ' ', ''), '-', '')
-                WHEN tblclients.phonenumber LIKE '+52%' THEN REPLACE(REPLACE(REPLACE(REPLACE(tblclients.phonenumber, '+', ''), '.', '1'), ' ', ''), '-', '')
-                ELSE REPLACE(REPLACE(REPLACE(REPLACE(tblclients.phonenumber, '+', ''), ' ', ''), '-', ''), '.', '') 
-            END = ?
+            tblclients.id = ?
     `;
 
     try {
-        const [results] = await db.execute(query, [userPhone.split('@')[0]]);
+        const [results] = await db.execute(query, [clientWhmcs]);
 
         if (results.length === 0) {
             await sendMessage(client, chatId, '🤖 No tenes servicios activos');
@@ -60,7 +56,7 @@ async function fetchActiveServers(chatId, userPhone, client)
 }
 
 // Function to fetch upcoming due dates
-async function fetchUpcomingDueDates(days, chatId, userPhone, client) {
+async function fetchUpcomingDueDates(days, chatId, clientWhmcs, client) {
     const db = await connect('whmcs');
 
     const query = `
@@ -83,15 +79,11 @@ async function fetchUpcomingDueDates(days, chatId, userPhone, client) {
         WHERE 
             tblhosting.domainstatus = "Active" AND
             tblhosting.nextduedate <= DATE_ADD(CURDATE(), INTERVAL ? DAY) AND
-            CASE 
-                WHEN tblclients.phonenumber LIKE '+54%' THEN REPLACE(REPLACE(REPLACE(REPLACE(tblclients.phonenumber, '+', ''), '.', '9'), ' ', ''), '-', '')
-                WHEN tblclients.phonenumber LIKE '+52%' THEN REPLACE(REPLACE(REPLACE(REPLACE(tblclients.phonenumber, '+', ''), '.', '1'), ' ', ''), '-', '')
-                ELSE REPLACE(REPLACE(REPLACE(REPLACE(tblclients.phonenumber, '+', ''), ' ', ''), '-', ''), '.', '') 
-            END = ?
+            tblclients.id = ?
     `;
 
     try {
-        const [results] = await db.execute(query, [days, userPhone.split('@')[0]]);
+        const [results] = await db.execute(query, [days, clientWhmcs]);
 
         if (results.length === 0) {
             await sendMessage(client, chatId, '🤖 No tenes vencimientos en los próximos ' + days + " días");
@@ -124,7 +116,7 @@ async function fetchUpcomingDueDates(days, chatId, userPhone, client) {
     }
 }
 
-async function getTotalSumOfContractedServices(chatId, userPhone, client) {
+async function getTotalSumOfContractedServices(chatId, clientWhmcs, client) {
     const db = await connect('whmcs');
 
     const query = `
@@ -136,15 +128,11 @@ async function getTotalSumOfContractedServices(chatId, userPhone, client) {
             tblclients ON tblhosting.userid = tblclients.id 
         WHERE 
             tblhosting.domainstatus IN ("Active", "Suspended") AND
-            CASE 
-                WHEN tblclients.phonenumber LIKE '+54%' THEN REPLACE(REPLACE(REPLACE(REPLACE(tblclients.phonenumber, '+', ''), '.', '9'), ' ', ''), '-', '')
-                WHEN tblclients.phonenumber LIKE '+52%' THEN REPLACE(REPLACE(REPLACE(REPLACE(tblclients.phonenumber, '+', ''), '.', '1'), ' ', ''), '-', '')
-                ELSE REPLACE(REPLACE(REPLACE(REPLACE(tblclients.phonenumber, '+', ''), ' ', ''), '-', ''), '.', '') 
-            END = ?
+            tblclients.id = ?
     `;
 
     try {
-        const [results] = await db.execute(query, [userPhone.split('@')[0]]);
+        const [results] = await db.execute(query, [clientWhmcs]);
 
         if (results.length === 0 || results[0].amount === null) {
             await sendMessage(client, chatId, '🤖 No tenés servicios activos o suspendidos');
@@ -163,7 +151,7 @@ async function getTotalSumOfContractedServices(chatId, userPhone, client) {
     }
 }
 
-async function requestCancel(chatId, userPhone, client) {
+async function requestCancel(chatId, clientWhmcs, client) {
     const db = await connect('whmcs');
 
     const query = `
@@ -185,15 +173,11 @@ async function requestCancel(chatId, userPhone, client) {
             tblcurrencies ON tblclients.currency = tblcurrencies.id
         WHERE 
             tblhosting.domainstatus IN ("Active", "Suspended") AND
-            CASE 
-                WHEN tblclients.phonenumber LIKE '+54%' THEN REPLACE(REPLACE(REPLACE(REPLACE(tblclients.phonenumber, '+', ''), '.', '9'), ' ', ''), '-', '')
-                WHEN tblclients.phonenumber LIKE '+52%' THEN REPLACE(REPLACE(REPLACE(REPLACE(tblclients.phonenumber, '+', ''), '.', '1'), ' ', ''), '-', '')
-                ELSE REPLACE(REPLACE(REPLACE(REPLACE(tblclients.phonenumber, '+', ''), ' ', ''), '-', ''), '.', '') 
-            END = ?
+            tblclients.id = ?
     `;
 
     try {
-        const [results] = await db.execute(query, [userPhone.split('@')[0]]);
+        const [results] = await db.execute(query, [clientWhmcs]);
 
         if (results.length === 0) {
             await sendMessage(client, chatId, '🤖 No tenes servicios que puedas cancelar');
@@ -220,7 +204,7 @@ async function requestCancel(chatId, userPhone, client) {
     }
 }
 
-async function confirmRequestCancel(serviceId, chatId, userPhone, client) {
+async function confirmRequestCancel(serviceId, chatId, clientWhmcs, client) {
     const db = await connect('whmcs');
 
     const query = `
@@ -238,15 +222,11 @@ async function confirmRequestCancel(serviceId, chatId, userPhone, client) {
             tblproducts ON tblhosting.packageid = tblproducts.id 
         WHERE 
             tblhosting.domainstatus IN ("Active", "Suspended") AND
-            CASE 
-                WHEN tblclients.phonenumber LIKE '+54%' THEN REPLACE(REPLACE(REPLACE(REPLACE(tblclients.phonenumber, '+', ''), '.', '9'), ' ', ''), '-', '')
-                WHEN tblclients.phonenumber LIKE '+52%' THEN REPLACE(REPLACE(REPLACE(REPLACE(tblclients.phonenumber, '+', ''), '.', '1'), ' ', ''), '-', '')
-                ELSE REPLACE(REPLACE(REPLACE(REPLACE(tblclients.phonenumber, '+', ''), ' ', ''), '-', ''), '.', '') 
-            END = ?
+            tblclients.id = ?
     `;
 
     try {
-        const [results] = await db.execute(query, [userPhone.split('@')[0]]);
+        const [results] = await db.execute(query, [clientWhmcs]);
 
         if (results.length === 0) {
             await sendMessage(client, chatId, '🤖 No tenes servicios activos o suspendidos que puedas cancelar');
