@@ -62,7 +62,7 @@ client.on('message_create', async (message) => {
     if (! isReady) return;
     
     let chatId = message.from;
-    const commandParts = message.body.split(' ');
+    const commandParts = message.body.toLowerCase().split(' ');
     
     // If I send the message, the message will still be directed to the client.
     if (message.fromMe) {
